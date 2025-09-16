@@ -13,4 +13,4 @@ git reset --hard origin/main   # kalau branch utama "main"
 git pull
 
 # Jalankan bot pakai PM2 (restart kalau ada update)
-pm2 restart bot || pm2 start index.js --name "selfbot-discord"
+pm2 restart selfbot-discord || pm2 start index.js --name "selfbot-discord"
