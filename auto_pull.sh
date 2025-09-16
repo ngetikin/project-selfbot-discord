@@ -2,7 +2,7 @@
 # auto_pull.sh
 
 # Masuk ke folder project
-cd /data/data/com.termux/files/home/bot-discord || exit
+cd /data/data/com.termux/files/home/selfbot-discord || exit
 
 # Reset biar selalu sync
 git fetch --all
