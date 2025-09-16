@@ -30,3 +30,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
 else
   echo "[AUTO_PULL] Tidak ada update, skip restart."
 fi
+
+# kasih rehat 6 jam
+echo "[AUTO_PULL] Rehat 24 jam..."
+sleep 24h
