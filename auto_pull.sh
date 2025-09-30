@@ -34,4 +34,4 @@ fi
 
 # kasih rehat 6 jam
 echo "[AUTO_PULL] Rehat 24 jam..."
-sleep 12h
+sleep 5h
