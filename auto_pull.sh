@@ -29,6 +29,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
   echo "[AUTO_PULL] Bot berhasil di-update & restart."
 else
   echo "[AUTO_PULL] Tidak ada update, skip restart."
+  pm2 restart selfbot-discord || pm2 start index.js --name "selfbot-discord"
 fi
 
 # kasih rehat 6 jam
