@@ -1,4 +1,6 @@
-module.exports = {
+import { CommandModule } from '../types/modules';
+
+const webhookCommand: CommandModule = {
   name: 'webhook',
   run: async (client, message, args) => {
     const text = args.join(' ');
@@ -10,12 +12,14 @@ module.exports = {
       await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text })
+        body: JSON.stringify({ content: text }),
       });
       message.channel.send('Webhook sent ✅');
     } catch (err) {
       console.error('[webhook] error', err);
       message.channel.send('Failed to send webhook.');
     }
-  }
+  },
 };
+
+export default webhookCommand;

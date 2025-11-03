@@ -1,4 +1,6 @@
-module.exports = {
+import { CommandModule } from '../types/modules';
+
+const serverInfoCommand: CommandModule = {
   name: 'serverinfo',
   run: async (client, message) => {
     const guild = message.guild;
@@ -10,5 +12,7 @@ module.exports = {
 - Owner: <@${guild.ownerId}>
 - Created: ${guild.createdAt.toUTCString()}`;
     message.channel.send(info);
-  }
+  },
 };
+
+export default serverInfoCommand;

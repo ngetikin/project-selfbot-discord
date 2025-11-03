@@ -1,6 +1,24 @@
-const GLOBAL_EMOJI_POOL = ['😀','😅','😂','🤣','😊','😉','😍','🤩','😎','🙃','🤔','👍','👏','🔥','✨'];
+import { EventModule } from '../types/modules';
 
-module.exports = {
+const GLOBAL_EMOJI_POOL = [
+  '😀',
+  '😅',
+  '😂',
+  '🤣',
+  '😊',
+  '😉',
+  '😍',
+  '🤩',
+  '😎',
+  '🙃',
+  '🤔',
+  '👍',
+  '👏',
+  '🔥',
+  '✨',
+];
+
+const autoEmojiReactor: EventModule = {
   event: 'messageCreate',
   run: async (client, message) => {
     try {
@@ -8,11 +26,11 @@ module.exports = {
       if (!message.webhookId && message.author.bot) return;
 
       // ambil custom non-animated emoji dari server
-      let emojiPool = [];
+      let emojiPool: any[] = [];
       if (message.guild) {
         const customEmojis = message.guild.emojis.cache.filter(e => !e.animated);
         if (customEmojis.size > 0) {
-          emojiPool = emojiPool.concat(customEmojis.map(e => e));
+          emojiPool = emojiPool.concat(Array.from(customEmojis.values()));
         }
       }
 
@@ -39,5 +57,7 @@ module.exports = {
     } catch (err) {
       console.error('[autoEmojiReactor] error', err);
     }
-  }
+  },
 };
+
+export default autoEmojiReactor;

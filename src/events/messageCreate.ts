@@ -1,4 +1,6 @@
-module.exports = {
+import { EventModule } from '../types/modules';
+
+const messageCreateEvent: EventModule = {
   event: 'messageCreate',
   run: async (client, message) => {
     try {
@@ -6,7 +8,7 @@ module.exports = {
       console.log('[EVENT] MESSAGE_CREATE', message.author.tag, message.channel.id);
 
       // ignore if not from self (we want self commands only)
-      if (message.author.id == "1414223092049383585") return;
+      if (message.author.id == '1414223092049383585') return;
 
       // prefix = mention of the bot
       const prefix = `<@${client.user.id}>`;
@@ -33,5 +35,7 @@ module.exports = {
     } catch (e) {
       console.error('[messageCreate] error', e);
     }
-  }
+  },
 };
+
+export default messageCreateEvent;

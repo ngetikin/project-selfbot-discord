@@ -2,10 +2,16 @@
   "name": "discord-selfbot-modular",
   "version": "1.0.0",
   "description": "Modular Discord selfbot (educational).",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "build": "tsc",
+    "prestart": "pnpm build",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "prepare": "husky"
   },
   "author": "ngetikin",
   "license": "MIT",
@@ -17,5 +23,26 @@
     "ffmpeg-static": "^5.2.0",
     "nodemon": "^3.1.10",
     "sodium": "^3.0.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^24.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "pnpm exec eslint --fix",
+      "pnpm exec prettier --write --ignore-unknown"
+    ],
+    "*": "pnpm exec prettier --write --ignore-unknown"
   }
 }

@@ -1,5 +1,7 @@
-module.exports = {
-  event: "raw",
+import { EventModule } from '../types/modules';
+
+const loggerEvent: EventModule = {
+  event: 'raw',
   run: (client, packet) => {
     // raw events are many; log a short summary
     try {
@@ -8,7 +10,9 @@ module.exports = {
       }
     } catch (e) {
       // ignore
-      console.error(`[ERROR] ${e}`)
+      console.error(`[ERROR] ${e}`);
     }
-  }
+  },
 };
+
+export default loggerEvent;
