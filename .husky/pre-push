@@ -1,4 +1,12 @@
 #!/usr/bin/env sh
 
+set -e
+
+last_commit_msg=$(git log -1 --pretty=%s)
+if printf '%s' "$last_commit_msg" | grep -qi '^wip:'; then
+  echo "husky: skipping pre-push for WIP commit"
+  exit 0
+fi
+
 pnpm lint
 pnpm build

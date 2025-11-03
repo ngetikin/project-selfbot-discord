@@ -20,7 +20,7 @@ There is no automated test suite yet. Validate changes by running the bot agains
 
 Historical commits mix ad-hoc messages with conventional commits (`fix(auto_pull.sh): ...`). Prefer the conventional form: `type(scope): summary`, keeping the summary under 60 characters. Reference relevant issues in the body and describe user-facing impacts. Pull requests should outline (1) purpose, (2) key changes, (3) manual test evidence (text or screenshots), and (4) rollout considerations such as token management. Request review from another maintainer before merging, and ensure the branch is rebased on the latest `main`.
 
-Pre-commit hooks run `lint-staged` (ESLint --fix + Prettier on staged files) automatically; fix issues before recommitting. Pre-push hooks run `pnpm lint` followed by `pnpm build` to catch type and style errors—push with `HUSKY=0` only for emergency hotfixes.
+Pre-commit hooks run `lint-staged` (ESLint --fix + Prettier on staged files) automatically unless your commit message begins with `wip:`—those commits intentionally skip the checks so you can checkpoint work. Pre-push hooks run `pnpm lint` followed by `pnpm build`; the push hook also skips when the latest commit starts with `wip:`. Push with `HUSKY=0` only for emergency hotfixes.
 
 ## Security & Configuration Tips
 
