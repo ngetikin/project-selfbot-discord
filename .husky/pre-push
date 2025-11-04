@@ -8,5 +8,5 @@ if printf '%s' "$last_commit_msg" | grep -qi '^wip:'; then
   exit 0
 fi
 
-pnpm lint
+pnpm lint-staged
 pnpm build
