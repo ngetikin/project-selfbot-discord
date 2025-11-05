@@ -136,3 +136,11 @@ const dailyMemeEvent: EventModule = {
 };
 
 export default dailyMemeEvent;
+
+export const resetDailyMemeScheduler = () => {
+  if (nextTimeout) {
+    clearTimeout(nextTimeout);
+    nextTimeout = null;
+  }
+  jobInitialized = false;
+};

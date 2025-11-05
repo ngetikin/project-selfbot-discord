@@ -9,7 +9,7 @@ Ikuti daftar berikut secara berurutan. Setiap item memiliki detail di file terpi
 3. [TODO 03 – Validasi Environment & Dokumentasi](./03-env-validation.md)  
    Status ringkas: Sudah
 4. [TODO 04 – Perluasan Unit Test](./04-test-suite-expansion.md)  
-   Status ringkas: Belum
+   Status ringkas: Sudah
 
 Catatan:
 

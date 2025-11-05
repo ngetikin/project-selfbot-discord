@@ -2,8 +2,8 @@
 
 Status:
 
-- [x] Belum
-- [ ] Sudah
+- [ ] Belum
+- [x] Sudah
 
 Tujuan:
 
