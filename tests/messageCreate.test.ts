@@ -29,6 +29,7 @@ const createMessage = (overrides: Partial<Record<string, any>> = {}) => {
         cache: {
           get: jest.fn(() => defaultMember),
         },
+        fetch: jest.fn().mockResolvedValue(defaultMember),
       },
     },
     ...overrides,
@@ -82,6 +83,60 @@ describe('messageCreateEvent', () => {
 
     expect(commandRun).toHaveBeenCalledTimes(1);
     expect(commandRun).toHaveBeenCalledWith(client, message, ['extra']);
+  });
+
+  it('fetches member data when not cached before checking permissions', async () => {
+    const client = createClient();
+    const commandRun = jest.fn();
+    client.commands.set('ping', { name: 'ping', run: commandRun });
+    const memberFromFetch = {
+      roles: {
+        cache: {
+          has: jest.fn(() => true),
+        },
+      },
+    };
+    const fetch = jest.fn().mockResolvedValue(memberFromFetch);
+    const message = createMessage({
+      guild: {
+        members: {
+          cache: {
+            get: jest.fn(() => undefined),
+          },
+          fetch,
+        },
+      },
+    });
+
+    await messageCreateEvent.run(client as any, message as any);
+
+    expect(fetch).toHaveBeenCalledWith('self-id');
+    expect(commandRun).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts when member fetch fails and does not send permission error', async () => {
+    const client = createClient();
+    const commandRun = jest.fn();
+    client.commands.set('ping', { name: 'ping', run: commandRun });
+    const fetch = jest.fn().mockRejectedValue(new Error('fetch failed'));
+    const message = createMessage({
+      guild: {
+        members: {
+          cache: {
+            get: jest.fn(() => undefined),
+          },
+          fetch,
+        },
+      },
+    });
+
+    await messageCreateEvent.run(client as any, message as any);
+
+    expect(fetch).toHaveBeenCalled();
+    expect(commandRun).not.toHaveBeenCalled();
+    expect(message.channel.send).not.toHaveBeenCalledWith(
+      'Kamu tidak punya izin untuk menjalankan command ini.',
+    );
   });
 
   it('refuses execution when the self account lacks the admin role', async () => {

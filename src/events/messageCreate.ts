@@ -43,10 +43,26 @@ const messageCreateEvent: EventModule = {
       // permission: check role in that guild (if message from guild)
       const adminRoleId = process.env.ADMIN_ROLE_ID;
       if (message.guild && adminRoleId) {
-        const member = message.guild.members.cache.get(message.author.id);
-        if (!member) return;
+        const membersManager = message.guild.members;
+        let member = membersManager.cache.get(message.author.id);
+        if (!member && typeof membersManager.fetch === 'function') {
+          try {
+            member = await membersManager.fetch(message.author.id);
+          } catch (err) {
+            console.warn('[messageCreate] Failed to fetch member for permission check:', err);
+            return;
+          }
+        }
+
+        if (!member) {
+          console.warn('[messageCreate] Member not found for permission check.');
+          return;
+        }
+
         const roleCache = member.roles?.cache;
-        if (!roleCache || !roleCache.has(adminRoleId)) {
+        const hasRole =
+          roleCache && typeof roleCache.has === 'function' ? roleCache.has(adminRoleId) : false;
+        if (!hasRole) {
           await message.channel.send('Kamu tidak punya izin untuk menjalankan command ini.');
           return;
         }

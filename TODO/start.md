@@ -5,7 +5,7 @@ Ikuti daftar berikut secara berurutan. Setiap item memiliki detail di file terpi
 1. [TODO 01 – Help Command & Prefix](./01-help-and-prefix.md)  
    Status ringkas: Sudah
 2. [TODO 02 – Fallback Member Fetch & Izin](./02-member-fetch-permission.md)  
-   Status ringkas: Belum
+   Status ringkas: Sudah
 3. [TODO 03 – Validasi Environment & Dokumentasi](./03-env-validation.md)  
    Status ringkas: Belum
 4. [TODO 04 – Perluasan Unit Test](./04-test-suite-expansion.md)  
