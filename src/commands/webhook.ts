@@ -2,6 +2,7 @@ import { CommandModule } from '../types/modules';
 
 const webhookCommand: CommandModule = {
   name: 'webhook',
+  description: 'Kirim pesan ke URL webhook yang dikonfigurasi.',
   run: async (client, message, args) => {
     const text = args.join(' ');
     if (!text) return message.channel.send('Usage: <@me> webhook <message>');

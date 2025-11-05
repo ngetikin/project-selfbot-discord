@@ -17,8 +17,12 @@ const messageCreateEvent: EventModule = {
       // Only respond to messages sent by this selfbot account
       if (message.author.id !== client.user.id) return;
 
-      // prefix = mention of the bot
+      // prefix = mention of the bot atau prefix teks opsional
+      const textPrefix = process.env.TEXT_PREFIX?.trim();
       const prefixes = [`<@${client.user.id}>`, `<@!${client.user.id}>`];
+      if (textPrefix) {
+        prefixes.push(textPrefix);
+      }
       const prefix = prefixes.find(p => message.content.startsWith(p));
       if (!prefix) return;
 

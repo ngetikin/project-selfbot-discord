@@ -69,6 +69,21 @@ describe('messageCreateEvent', () => {
     expect(commandRun).not.toHaveBeenCalled();
   });
 
+  it('supports text prefix when configured', async () => {
+    process.env.TEXT_PREFIX = '!';
+    const client = createClient();
+    const commandRun = jest.fn();
+    client.commands.set('ping', { name: 'ping', run: commandRun });
+    const message = createMessage({
+      content: '!ping   extra',
+    });
+
+    await messageCreateEvent.run(client as any, message as any);
+
+    expect(commandRun).toHaveBeenCalledTimes(1);
+    expect(commandRun).toHaveBeenCalledWith(client, message, ['extra']);
+  });
+
   it('refuses execution when the self account lacks the admin role', async () => {
     const client = createClient();
     const commandRun = jest.fn();

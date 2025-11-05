@@ -2,6 +2,7 @@ import { CommandModule } from '../types/modules';
 
 const clearCommand: CommandModule = {
   name: 'clear',
+  description: 'Hapus pesan milik akun selfbot di channel sekarang (1–100).',
   run: async (client, message, args) => {
     // Usage:
     // <@me> remove <count>  -> delete last <count> messages from the bot itself in the channel (or messages by others if privileged)

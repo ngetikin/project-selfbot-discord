@@ -2,6 +2,7 @@ import { CommandModule } from '../types/modules';
 
 const serverInfoCommand: CommandModule = {
   name: 'serverinfo',
+  description: 'Tampilkan informasi dasar server tempat command dipanggil.',
   run: async (client, message) => {
     const guild = message.guild;
     if (!guild) return message.channel.send('This command only works in a server.');

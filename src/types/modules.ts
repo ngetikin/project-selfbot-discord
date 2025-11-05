@@ -1,5 +1,6 @@
 export interface CommandModule {
   name: string;
+  description?: string;
   run: (client: any, message: any, args: string[]) => Promise<void> | void;
 }
 
