@@ -1,6 +1,6 @@
 # Review Proyek – Discord Selfbot Modular
 
-Dokumen ini merangkum kondisi repositori pada commit `cd87ccd` di branch `dev`: fitur yang sudah ada, peningkatan terbaru, tooling yang terpasang, kekurangan yang ditemukan, serta rekomendasi pengembangan selanjutnya.
+Dokumen ini menggambarkan kondisi repositori pada commit `36a3e2f` di branch `dev`: fitur yang tersedia, upgrade terbaru, tooling, risiko, dan rencana lanjutan.
 
 ---
 
@@ -11,19 +11,20 @@ Dokumen ini merangkum kondisi repositori pada commit `cd87ccd` di branch `dev`: 
   - Menginisialisasi klien `discord.js-selfbot-v13`.
   - Melakukan auto-discovery command di `src/commands/` dan event listener di `src/events/`.
   - Menyimpan command ke `client.commands` (Collection) dan mendaftarkan event handler ke klien.
-  - Tercatat login sukses lewat log `[READY]` dan menggunakan `TOKEN` dari `.env`.
+  - Menginisialisasi logger Pino global, memvalidasi environment, serta menangani hasil login dengan log berlevel.
 
 - **Command module**
-  - `clearMessage.ts`: Menghapus sampai 100 pesan milik akun selfbot pada channel aktif dengan validasi jumlah dan feedback respons.
-  - `serverinfo.ts`: Mengirim ringkasan informasi server (nama, ID, jumlah member, pemilik, tanggal pembuatan).
-  - `webhook.ts`: Mem-posting teks ke `WEBHOOK_URL` yang ada di env dengan penanganan error dasar.
+  - `clearMessage.ts`: Menghapus sampai 100 pesan milik akun selfbot pada channel aktif dengan validasi jumlah dan log error terstruktur.
+  - `serverinfo.ts`: Mengirim ringkasan informasi server (nama, ID, jumlah member, pemilik, tanggal pembuatan) sekaligus melog eksekusi.
+  - `webhook.ts`: Mem-posting teks ke `WEBHOOK_URL`, melog hasil pengiriman, dan memberi umpan balik ke pengguna.
+  - `help.ts`: Menyajikan daftar command beserta deskripsi dan menjelaskan cara trigger (mention atau prefix teks).
 
 - **Event module**
-  - `messageCreate.ts`: Dispatcher command; kini hanya menerima pesan dari akun selfbot sendiri, mendukung mention `<@id>` dan `<@!id>`, memberi peringatan bila `client.commands` kosong, serta menerapkan pengecekan role `ADMIN_ROLE_ID` apabila tersedia.
-  - `autoEmojiReactor.ts`: Menambahkan reaksi emoji acak pada channel yang diatur melalui `EMOJI_CHANNEL_ID`, memprioritaskan emoji server non-animasi.
-  - `dailyMeme.ts`: Menjadwalkan kirim meme tiap hari pukul 06.00 WIB dari API `DAILY_MEME_API_URL` (fallback `https://candaan-api.vercel.app/api/image/random`). Menangani kesalahan HTTP dan memberi log jadwal.
-  - `logger.ts`: Logger event `raw` sederhana.
-  - `ready.ts`: Saat `ready`, mampu join voice channel (jika `VOICE_CHANNEL_ID` diset) dan memutar beberapa aktivitas Rich Presence ketika `AUTO_STATUS_ROTATOR` aktif, dengan logging error yang baik.
+  - `messageCreate.ts`: Dispatcher command yang hanya merespons akun selfbot, menerima mention `<@id>/<@!id>` maupun prefix teks `TEXT_PREFIX`, fallback fetch member saat cache kosong, dan memakai logger dengan level sesuai outcome.
+  - `autoEmojiReactor.ts`: Menambahkan reaksi emoji ke channel khusus dengan fallback emoji global; error direkam via Pino.
+  - `dailyMeme.ts`: Menjadwalkan kirim meme tiap 06.00 WIB; log jadwal, sukses, dan kegagalan dengan child logger; menyediakan util `resetDailyMemeScheduler` untuk testing.
+  - `logger.ts`: Mencatat raw event singkat (level debug) menggunakan logger modul.
+  - `ready.ts`: Mengelola join voice channel dan rotasi status, mencatat keberhasilan maupun kegagalan lewat Pino.
 
 - **Type definition (`src/types/modules.ts`)**
   - Menyediakan interface untuk command/event module sehingga loader tetap konsisten.
@@ -33,42 +34,52 @@ Dokumen ini merangkum kondisi repositori pada commit `cd87ccd` di branch `dev`: 
   - Prettier (`.prettierrc.json`, `.prettierignore`) dan Husky hooks dengan `lint-staged`.
   - Script `pnpm` untuk build (tsc), dev (`tsx watch`), lint, format, dsb.
   - Skrip utilitas `auto_pull.sh`.
+  - Struktur TODO modular di folder `TODO/` yang mendokumentasikan pekerjaan dan status masing-masing task.
 
 ---
 
 ## Peningkatan Terbaru
 
-1. **Perbaikan dispatcher command**
-   - `src/events/messageCreate.ts` kini:
-     - Mengabaikan pesan selain dari akun selfbot.
-     - Menerima dua format mention agar fleksibel terhadap perubahan display name.
-     - Memberi pesan peringatan saat `client.commands` belum siap.
-     - Hanya memeriksa role jika `ADMIN_ROLE_ID` diatur, lalu mengirim balasan “tidak punya izin” yang jelas.
-     - Logging tambahan ketika data author atau `client.user` belum siap.
+1. **Sistem logging Pino**
+   - Menambahkan utilitas `src/utils/logger.ts` dengan konfigurasi berbeda untuk production (JSON) dan development (`pino-pretty`).
+   - Semua command/event/entrypoint kini memakai child logger menggantikan `console.*`.
+   - Variabel `LOG_LEVEL` ditambahkan ke `.env.example` dan tervalidasi saat startup.
 
-2. **Fondasi unit testing**
-   - Menambahkan dependensi `jest`, `ts-jest`, `@types/jest`.
-   - Membuat `jest.config.cjs` dengan preset ts-jest, coverage, dan setup khusus.
-   - `tests/setup.ts` menyiapkan env (ADMIN_ROLE_ID) dan reset mock sebelum tiap test.
-   - `tests/messageCreate.test.ts` berisi tiga skenario:
-     - Jalur sukses ketika akun selfbot dan role cocok.
-     - Pesan dari user lain diabaikan.
-     - Jalur gagal ketika role tidak memenuhi syarat.
+2. **Dispatcher & prefix**
+   - Prefix teks (`TEXT_PREFIX`) di-support berdampingan dengan prefix mention.
+   - Guard peran mem-fetch member saat cache kosong; log peringatan saat fetch gagal atau role tidak ditemukan.
 
-3. **Perbaikan Developer Experience**
-   - Menambahkan script `pnpm test` dan menautkannya ke Husky pre-push (urutan lint → test → build).
-   - Membuat hook `commit-msg` yang memaksa format Conventional Commits dengan pengecualian `wip:` dan merge commit.
-   - Menyesuaikan `eslint.config.mjs` supaya file test tidak memerlukan parser informasi tipe sehingga lint staged berjalan mulus.
+3. **Validasi environment**
+   - Membuat util `validateEnv` untuk memblokir startup bila `TOKEN` hilang dan memberi warning untuk variabel opsional (LOG_LEVEL, ADMIN_ROLE_ID, dsb).
+
+4. **Command & event keyboards**
+   - Menambahkan command `help` dengan daftar command beserta deskripsi.
+   - Menyematkan deskripsi ke command yang ada untuk keperluan help.
+   - Event `dailyMeme` diekspor ulang dengan fungsi reset agar mudah dites.
+
+5. **Perluasan testing**
+   - Suite Jest mencakup command (`clear`, `serverinfo`, `webhook`), event `autoEmojiReactor`, `dailyMeme`, serta `messageCreate` dengan berbagai skenario (prefix teks, fetch fallback, izin ditolak).
+   - Logger dimock di test agar output bersih.
+
+6. **Dokumentasi**
+   - README disederhanakan ke Bahasa Indonesia dengan penjelasan singkat cara pakai, hosting Termux, dan keamanan token.
+   - Struktur TODO diperluas (TODO/05-logging-system.md) menjelaskan upgrade logging dan praktik terbaik.
+
+7. **Tooling & DX**
+   - Husky pre-push kini menjalankan lint → test → build.
+   - Hook `commit-msg` menegakkan Conventional Commits dengan pengecualian `wip:`.
+   - Lint config dipisah untuk `src` (typed rules) dan test (tanpa kebutuhan tipe).
 
 ---
 
-## Dependensi Baru (Dev)
+## Dependensi Baru
 
-- `jest`
-- `ts-jest`
-- `@types/jest`
+- **Runtime**
+  - `pino`
 
-Tidak ada perubahan pada dependency runtime.
+- **Dev**
+  - `pino-pretty`
+  - `jest`, `ts-jest`, `@types/jest`
 
 ---
 
@@ -77,50 +88,50 @@ Tidak ada perubahan pada dependency runtime.
 - **Status selfbot:** library yang dipakai melanggar ToS Discord bila dipakai di akun real. Harus sangat hati-hati bila ingin dipakai di luar eksperimen.
 - **Hak akses terbatas:** dispatcher hanya menerima command dari akun selfbot. Jika ingin admin lain bisa mengakses, perlu mekanisme whitelist tambahan.
 - **Ketergantungan cache:** pengecekan role memakai cache `message.guild.members`. Pada server besar, cache mungkin tidak lengkap—perlu fallback `fetch`.
-- **Ketergantungan restart:** module scheduler `dailyMeme` tidak punya persistensi, sehingga restart akan memundurkan jadwal dan tidak punya backoff untuk kegagalan beruntun.
-- **Cakupan testing sempit:** Baru event `messageCreate` yang diuji. Command lain dan scheduler belum tertangkap oleh unit test.
-- **Logging bising:** Penggunaan `console.log` masih banyak. Tanpa level log atau pemfilteran, output produksi bisa sulit dibaca.
-- **Validasi konfigurasi minim:** Error akibat env yang kosong baru terlihat ketika fitur dipicu. Perlu mekanisme validasi saat startup agar developer tahu lebih cepat.
-- **Keamanan webhook:** Command webhook belum memberi detail saat request gagal (status code, dsb). Pengguna mungkin kesulitan debug bila URL salah.
+- **Ketergantungan restart:** scheduler meme harian tetap stateless; restart mengulang perhitungan jadwal dan belum ada retry/backoff khusus.
+- **Keamanan webhook:** Command webhook belum mengevaluasi response body/status; pengguna hanya mendapat pesan generik saat gagal.
+- **CI eksternal:** Validasi masih mengandalkan Husky lokal; belum ada pipeline CI remote.
 
 ---
 
 ## Rekomendasi Pengembangan
 
 1. **Perluas suite testing**
-   - Tambah test untuk command lain dan event scheduler.
-   - Pertimbangkan integration test dengan mock klien Discord.js untuk memverifikasi registrasi module.
+   - Tambahkan integration test sederhana yang memverifikasi loader command/event berjalan (mock `require`).
+   - Sertakan test untuk error path (mis. webhook gagal, scheduler gagal fetch).
 
 2. **Kenyamanan command**
-   - Buat command `help` yang menampilkan daftar command dan contoh penggunaan.
-   - Tambahkan opsi prefix teks selain mention agar fleksibel.
+   - Implementasi alias atau grouping command di help untuk navigasi cepat.
+   - Pertimbangkan rate-limit command tertentu agar tidak spam.
 
 3. **Manajemen hak akses**
-   - Izinkan beberapa role ID atau daftar user ID yang dipercaya.
-   - Fallback `message.guild.members.fetch` saat cache kosong supaya pengecekan role tidak gagal.
+   - Izinkan beberapa role ID atau daftar user ID tepercaya melalui `.env`.
+   - Pertimbangkan fallback fetch dengan cache singkat agar tidak memanggil API terus-menerus.
 
 4. **Ketahanan scheduler**
-   - Simpan state jadwal (misal di file atau key-value store) agar restart tidak mengulang jadwal awal.
-   - Terapkan retry/backoff bila API meme bermasalah atau sediakan fallback konten lokal.
+   - Simpan timestamp eksekusi terakhir untuk menghindari double-send setelah restart.
+   - Tambahkan retry/backoff (mis. `setTimeout` bertahap) atau fallback gambar lokal ketika API down.
 
 5. **Observabilitas**
-   - Standarkan format log (misal pakai level info/warn/error) dan sertakan timestamp.
-   - Pertimbangkan agregasi log ke file atau layanan log untuk pemantauan jangka panjang.
+   - Integrasikan logger dengan transport eksternal (mis. file rotating atau Logflare) bila diperlukan.
+   - Tambahkan metadata (guildId/channelId) pada log penting.
 
 6. **Validasi konfigurasi**
-   - Tambahkan pengecekan `.env` saat startup; jika ada config wajib yang hilang, tampilkan instruksi lengkap atau hentikan proses.
-   - Perbarui `.env.example` agar mencantumkan seluruh variabel yang dipakai (TOKEN, ADMIN_ROLE_ID, DAILY_MEME_CHANNEL_ID, EMOJI_CHANNEL_ID, dsb).
+   - Perluas validasi untuk memastikan `TEXT_PREFIX` tidak bentrok dengan mention (mis. kosong atau spasi).
+   - Otomatiskan pengecekan `.env` via script `pnpm validate:env`.
 
 7. **Keamanan & roadmap**
-   - Dokumentasikan langkah menjalankan bot di server sandbox.
-   - Jika ingin produksi, rencanakan migrasi ke bot resmi (Discord bot SDK + slash command) agar tidak menyalahi ToS.
+
+- Dokumentasikan langkah menjalankan bot di server sandbox.
+- Jika ingin produksi, rencanakan migrasi ke bot resmi (Discord bot SDK + slash command) agar tidak menyalahi ToS.
 
 8. **CI/CD**
-   - Replikasi tahapan Husky (lint, test, build) pada pipeline CI supaya tetap terjaga walau hook dilewati.
-   - Publikasikan laporan cakupan test atau lint di pull request.
+
+- Replikasi tahapan Husky (lint, test, build) pada pipeline CI supaya tetap terjaga walau hook dilewati.
+- Publikasikan laporan cakupan test atau lint di pull request.
 
 ---
 
 ## Ringkasan
 
-Proyek telah memiliki selfbot modular dengan auto-loading command/event, reaksi emoji otomatis, scheduler meme harian, pengaturan presence, dan dispatcher yang lebih aman untuk command milik akun sendiri. Tooling diperkuat dengan Jest, hook commit konvensional, serta push pipeline yang menjalankan lint/test/build. Fokus lanjutan sebaiknya pada perluasan testing, penguatan manajemen akses, validasi konfigurasi, dan peningkatan observabilitas supaya proyek makin stabil dan mudah dirawat.
+Proyek ini kini memiliki selfbot modular dengan loader otomatis, command help, dukungan prefix teks, scheduler meme, dan logging terstruktur via Pino. Tooling lengkap mencakup lint/test/build di hook Git, suite Jest yang mulai meliputi command/event utama, serta dokumentasi yang lebih ringkas. Fokus berikutnya: memperkuat ketahanan scheduler, memperluas test ke integration level, menambah kontrol akses, dan menyiapkan pipeline CI eksternal agar perubahan baru tetap teruji tanpa mengandalkan hook lokal semata.
