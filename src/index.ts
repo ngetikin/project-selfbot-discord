@@ -3,8 +3,21 @@ import { Client, Collection } from 'discord.js-selfbot-v13';
 import fs from 'fs';
 import path from 'path';
 import { CommandModule, EventModule } from './types/modules';
+import validateEnv from './utils/validateEnv';
 
 dotenv.config();
+
+const { errors: envErrors, warnings: envWarnings } = validateEnv(process.env);
+if (envErrors.length > 0) {
+  for (const message of envErrors) {
+    console.error('[ENV] ', message);
+  }
+  process.exit(1);
+}
+
+for (const warning of envWarnings) {
+  console.warn('[ENV] ', warning);
+}
 
 const client = new Client({ checkUpdate: false }) as any;
 client.commands = client.commands ?? new Collection();
