@@ -39,6 +39,12 @@ const createMessage = (overrides: Partial<Record<string, any>> = {}) => {
 describe('messageCreateEvent', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
+    jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   it('executes the mapped command when invoked by self with required role', async () => {

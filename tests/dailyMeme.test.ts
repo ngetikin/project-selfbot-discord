@@ -9,6 +9,9 @@ describe('dailyMeme event', () => {
     jest.useFakeTimers();
     resetDailyMemeScheduler();
     getSpy = jest.spyOn(https, 'get');
+    jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -16,6 +19,7 @@ describe('dailyMeme event', () => {
     resetDailyMemeScheduler();
     jest.useRealTimers();
     delete process.env.DAILY_MEME_CHANNEL_ID;
+    jest.restoreAllMocks();
   });
 
   it('skips initialization when channel id missing', async () => {
