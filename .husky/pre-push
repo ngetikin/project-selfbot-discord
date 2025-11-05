@@ -9,4 +9,5 @@ if printf '%s' "$last_commit_msg" | grep -qi '^wip:'; then
 fi
 
 pnpm lint-staged
+pnpm test
 pnpm build

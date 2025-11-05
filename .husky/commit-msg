@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+set -e
+
+COMMIT_FILE="$1"
+if [ ! -f "$COMMIT_FILE" ]; then
+  echo "husky commit-msg: commit message file not found"
+  exit 1
+fi
+
+MESSAGE="$(sed -n '1p' "$COMMIT_FILE")"
+
+# Allow empty messages (handled by git), merge commits, and WIP shortcuts
+case "$MESSAGE" in
+  "" )
+    exit 0
+    ;;
+  Merge\ * )
+    exit 0
+    ;;
+  wip:*|WIP:* )
+    exit 0
+    ;;
+esac
+
+CONVENTIONAL_REGEX='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9-]+\))?!?: .+$'
+
+if ! printf '%s' "$MESSAGE" | grep -Eq "$CONVENTIONAL_REGEX"; then
+  cat <<'EOF'
+⛔️ Commit message must follow Conventional Commits:
+  type(optional-scope)[:|!]: short summary
+  Allowed types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test
+  Examples: "feat(commands): add ping command", "fix!: drop deprecated arg"
+  Use "wip:" prefix if you intentionally want to bypass the checks.
+EOF
+  exit 1
+fi
