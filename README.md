@@ -1,73 +1,69 @@
-# Discord Selfbot (Educational)
+# Discord Selfbot (Hanya untuk Edukasi)
 
-> ⚠️ Self-bots violate Discord’s Terms of Service. Use this repository strictly for experimentation on test servers that you own. Protect your token and rotate it frequently.
+> ⚠️ Selfbot melanggar Ketentuan Layanan Discord. Pakai repo ini cuma di server uji milik sendiri. Simpan token baik-baik dan ganti secara berkala.
 
-## About
+## Tentang Proyek
 
-This project started as a learning exercise by ngetikin to understand Discord self-bots end-to-end: building modular features, wiring events, and running the bot 24/7 on personal hardware (a Redmi 6A via Termux). The codebase is now a TypeScript foundation that can be extended without constantly rewriting docs—drop new commands in `src/commands/` or events in `src/events/` and rebuild.
+Repositori dari ngetikin ini adalah versi TypeScript dari selfbot yang modular. Tinggal taruh command baru di `src/commands/` atau event di `src/events/`, restart bot, dan fitur langsung kebaca. Awalnya dibuat sambil eksperimen jalanin bot 24/7 di Redmi 6A (Termux).
 
-## Highlights
+## Fitur Singkat
 
-- TypeScript + ESLint + Prettier toolchain with `pnpm` scripts for lint/format/build.
-- Dynamic module loader: each command/event is auto-registered.
-- Ready for DIY “CI/CD” using PM2 on resource-constrained devices.
+- Tooling modern: TypeScript, ESLint, Prettier, `pnpm`.
+- Loader dinamis: file command/event otomatis diregistrasi.
+- Siap dipakai di perangkat terbatas (contoh: PM2 di Termux).
 
-## Getting Started
+## Cara Mulai Cepat
 
 1. **Clone & install**
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/ngetikin/project-selfbot-discord.git
    cd project-selfbot-discord
    pnpm install
    cp .env.example .env
    ```
-2. **Configure `.env`** with at least `TOKEN`, and optional extras such as `WEBHOOK_URL`, `ADMIN_ROLE_ID`, or `EMOJI_CHANNEL_ID`.
-3. **Development loop**
-   - `pnpm dev` – watch mode with live reload (tsx).
-   - `pnpm lint` – static analysis + type-aware rules.
-   - `pnpm format` / `pnpm format:check` – keep style consistent.
-   - `pnpm build` – emit JavaScript into `dist/`.
-4. **Production run (desktop/server)**
-   ```bash
-   pnpm start   # auto-builds then runs node dist/index.js
-   ```
+2. **Atur `.env`** minimal isi `TOKEN`. Variabel lain opsional (`WEBHOOK_URL`, `ADMIN_ROLE_ID`, `EMOJI_CHANNEL_ID`, dll).
+3. **Perintah penting**
+   - `pnpm dev` – mode watch dengan reload.
+   - `pnpm lint` – cek style + aturan TypeScript.
+   - `pnpm format` / `pnpm format:check` – jaga format konsisten.
+   - `pnpm build` – compile ke `dist/`.
+   - `pnpm start` – build otomatis lalu jalanin `node dist/index.js`.
 
-## 24/7 Hosting on Redmi 6A (Termux Example)
+## Contoh Hosting 24/7 di Termux (Redmi 6A)
 
-1. Install prerequisites:
-   ```bash
-   pkg update
-   pkg install git nodejs-lts
-   corepack enable    # enables pnpm on modern Node
-   npm install -g pm2 # or pnpm add -g pm2
-   ```
-2. Clone and set up the project as above, then build once: `pnpm build`.
-3. Launch with PM2:
-   ```bash
-   pm2 start dist/index.js --name selfbot --watch
-   pm2 save            # persist process list
-   ```
-4. On Termux reboot, use `pm2 resurrect` after opening the session. Pair with Termux:Boot/Tasker if you need automatic startup.
-5. Deploy updates manually:
-   ```bash
-   git pull
-   pnpm install --frozen-lockfile
-   pnpm build
-   pm2 restart selfbot
-   ```
-   This lightweight flow mimics CI/CD on constrained hardware without extra services.
+```bash
+pkg update
+pkg install git nodejs-lts
+corepack enable          # aktifkan pnpm
+npm install -g pm2       # atau pnpm add -g pm2
+```
 
-## Customisation Checklist
+Setelah setup dan `pnpm build`, jalankan:
 
-- Add/modify commands in `src/commands/` exporting a default object `{ name, run }`.
-- Add listeners in `src/events/` exporting `{ event, run }`.
-- Extend shared types or third-party declarations under `src/types/` and `types/`.
-- Document manual tests in PRs; automated tests aren’t included yet.
+```bash
+pm2 start dist/index.js --name selfbot --watch
+pm2 save
+```
 
-## Token & Security Hygiene
+Kalau reboot, buka Termux lalu `pm2 resurrect`. Untuk update:
 
-- Never commit `.env`—the template `.env.example` documents required keys.
-- Consider using environment-specific tokens when hosting from a phone.
-- Rotate tokens whenever you demo the bot publicly or suspect leakage.
+```bash
+git pull
+pnpm install --frozen-lockfile
+pnpm build
+pm2 restart selfbot
+```
 
-Enjoy experimenting, but stay aware of Discord’s policies and the risks that come with self-bots.
+## Modifikasi Cepat
+
+- Command baru: buat file di `src/commands/` export `{ name, run }`.
+- Event baru: buat di `src/events/` export `{ event, run }`.
+- Tambah tipe/custom declaration di `src/types/` atau `types/`.
+
+## Keamanan Token
+
+- Jangan pernah commit `.env`.
+- Pakai token khusus tiap lingkungan kalau perlu.
+- Segera ganti token kalau dipakai demo atau merasa bocor.
+
+Selamat ngulik! Ingat selalu konsekuensi selfbot di platform Discord. :)
