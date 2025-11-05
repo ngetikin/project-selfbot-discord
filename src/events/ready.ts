@@ -1,11 +1,13 @@
 import { RichPresence, CustomStatus, SpotifyRPC } from 'discord.js-selfbot-v13';
+import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
+
+const log = getLogger('events:ready');
 
 const readyEvent: EventModule = {
   event: 'ready',
   run: async client => {
-    console.log('[EVENT] READY');
-    console.log(`[READY] Logged in as ${client.user.tag}`);
+    log.info({ user: client.user.tag, id: client.user.id }, 'Ready event fired');
 
     if (process.env.VOICE_CHANNEL_ID) {
       const channel = client.channels.cache.get(process.env.VOICE_CHANNEL_ID);
@@ -16,12 +18,12 @@ const readyEvent: EventModule = {
             selfDeaf: true,
             selfVideo: false,
           });
-          console.log('[READY] Joined VC successfully.');
+          log.info({ channelId: process.env.VOICE_CHANNEL_ID }, 'Joined voice channel');
         } catch (e: any) {
-          console.error('[READY] Error joining VC:', e?.message ?? e);
+          log.error({ err: e }, 'Error joining voice channel');
         }
       } else {
-        console.warn('[READY] Voice channel not found in cache.');
+        log.warn({ channelId: process.env.VOICE_CHANNEL_ID }, 'Voice channel not found in cache');
       }
     }
 
@@ -42,9 +44,9 @@ const readyEvent: EventModule = {
           .setStartTimestamp(Date.now());
 
         client.user.setPresence({ activities: [rp, custom, spotify] });
-        console.log('[READY] Status rotator initialized.');
+        log.info('Status rotator initialized');
       } catch (err) {
-        console.error('[READY] Status rotator error:', err);
+        log.error({ err }, 'Status rotator error');
       }
     }
   },

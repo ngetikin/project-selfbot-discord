@@ -1,4 +1,7 @@
+import { getLogger } from '../utils/logger';
 import { CommandModule } from '../types/modules';
+
+const log = getLogger('commands:serverinfo');
 
 const serverInfoCommand: CommandModule = {
   name: 'serverinfo',
@@ -13,6 +16,7 @@ const serverInfoCommand: CommandModule = {
 - Owner: <@${guild.ownerId}>
 - Created: ${guild.createdAt.toUTCString()}`;
     message.channel.send(info);
+    log.debug({ guildId: guild.id }, 'Server info command executed');
   },
 };
 

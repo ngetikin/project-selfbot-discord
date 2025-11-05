@@ -23,6 +23,7 @@
     "dotenv": "^17.2.2",
     "ffmpeg-static": "^5.2.0",
     "nodemon": "^3.1.10",
+    "pino": "^10.1.0",
     "sodium": "^3.0.2"
   },
   "devDependencies": {
@@ -36,6 +37,7 @@
     "husky": "^9.1.7",
     "jest": "^30.2.0",
     "lint-staged": "^16.2.6",
+    "pino-pretty": "^13.1.2",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.5",
     "tsx": "^4.20.6",

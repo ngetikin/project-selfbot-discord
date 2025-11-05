@@ -1,3 +1,18 @@
+jest.mock('../src/utils/logger', () => {
+  const mockLogger = {
+    child: jest.fn().mockReturnThis(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+    getLogger: jest.fn(() => mockLogger),
+  };
+});
+
 import messageCreateEvent from '../src/events/messageCreate';
 
 const createClient = () => {
@@ -38,13 +53,8 @@ const createMessage = (overrides: Partial<Record<string, any>> = {}) => {
 
 describe('messageCreateEvent', () => {
   beforeEach(() => {
-    jest.restoreAllMocks();
-    jest.spyOn(console, 'log').mockImplementation(() => undefined);
-    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
-  });
-
-  afterAll(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
+    process.env.TEXT_PREFIX = '';
   });
 
   it('executes the mapped command when invoked by self with required role', async () => {

@@ -1,3 +1,18 @@
+jest.mock('../src/utils/logger', () => {
+  const mockLogger = {
+    child: jest.fn().mockReturnThis(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+    getLogger: jest.fn(() => mockLogger),
+  };
+});
+
 import { EventEmitter } from 'events';
 import https from 'https';
 import dailyMemeEvent, { resetDailyMemeScheduler } from '../src/events/dailyMeme';
@@ -9,9 +24,7 @@ describe('dailyMeme event', () => {
     jest.useFakeTimers();
     resetDailyMemeScheduler();
     getSpy = jest.spyOn(https, 'get');
-    jest.spyOn(console, 'log').mockImplementation(() => undefined);
-    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
@@ -19,7 +32,7 @@ describe('dailyMeme event', () => {
     resetDailyMemeScheduler();
     jest.useRealTimers();
     delete process.env.DAILY_MEME_CHANNEL_ID;
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
   it('skips initialization when channel id missing', async () => {

@@ -10,6 +10,8 @@ Ikuti daftar berikut secara berurutan. Setiap item memiliki detail di file terpi
    Status ringkas: Sudah
 4. [TODO 04 – Perluasan Unit Test](./04-test-suite-expansion.md)  
    Status ringkas: Sudah
+5. [TODO 05 – Sistem Logging Pino](./05-logging-system.md)  
+   Status ringkas: Sudah
 
 Catatan:
 

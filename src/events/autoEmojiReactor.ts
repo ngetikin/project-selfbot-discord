@@ -1,3 +1,4 @@
+import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
 const GLOBAL_EMOJI_POOL = [
@@ -17,6 +18,8 @@ const GLOBAL_EMOJI_POOL = [
   '🔥',
   '✨',
 ];
+
+const log = getLogger('events:autoEmojiReactor');
 
 const autoEmojiReactor: EventModule = {
   event: 'messageCreate',
@@ -51,11 +54,11 @@ const autoEmojiReactor: EventModule = {
         try {
           await message.react(e.id ? `${e.name}:${e.id}` : e);
         } catch (err) {
-          console.error('[autoEmojiReactor] gagal react:', err.message || err);
+          log.error({ err }, 'Failed to add reaction');
         }
       }
     } catch (err) {
-      console.error('[autoEmojiReactor] error', err);
+      log.error({ err }, 'Unexpected error in autoEmojiReactor');
     }
   },
 };

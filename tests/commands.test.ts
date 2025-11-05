@@ -1,6 +1,25 @@
+jest.mock('../src/utils/logger', () => {
+  const mockLogger = {
+    child: jest.fn().mockReturnThis(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+    getLogger: jest.fn(() => mockLogger),
+  };
+});
+
 import clearCommand from '../src/commands/clearMessage';
 import serverInfoCommand from '../src/commands/serverinfo';
 import webhookCommand from '../src/commands/webhook';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('clear command', () => {
   afterEach(() => {

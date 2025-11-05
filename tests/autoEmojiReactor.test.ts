@@ -1,14 +1,31 @@
+jest.mock('../src/utils/logger', () => {
+  const mockLogger = {
+    child: jest.fn().mockReturnThis(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+    getLogger: jest.fn(() => mockLogger),
+  };
+});
+
 import autoEmojiReactor from '../src/events/autoEmojiReactor';
 
 describe('autoEmojiReactor event', () => {
   const client = {};
 
   beforeEach(() => {
+    jest.clearAllMocks();
     process.env.EMOJI_CHANNEL_ID = 'channel-1';
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+    jest.clearAllMocks();
     delete process.env.EMOJI_CHANNEL_ID;
   });
 

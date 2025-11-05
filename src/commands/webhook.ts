@@ -1,4 +1,7 @@
+import { getLogger } from '../utils/logger';
 import { CommandModule } from '../types/modules';
+
+const log = getLogger('commands:webhook');
 
 const webhookCommand: CommandModule = {
   name: 'webhook',
@@ -15,9 +18,10 @@ const webhookCommand: CommandModule = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text }),
       });
+      log.info({ url }, 'Webhook dispatched');
       message.channel.send('Webhook sent ✅');
     } catch (err) {
-      console.error('[webhook] error', err);
+      log.error({ err }, 'Failed to send webhook');
       message.channel.send('Failed to send webhook.');
     }
   },

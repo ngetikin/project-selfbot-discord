@@ -1,4 +1,7 @@
+import { getLogger } from '../utils/logger';
 import { CommandModule } from '../types/modules';
+
+const log = getLogger('commands:clear');
 
 const clearCommand: CommandModule = {
   name: 'clear',
@@ -23,7 +26,7 @@ const clearCommand: CommandModule = {
         .send(`Removed ${toDelete.length} messages.`)
         .then(m => setTimeout(() => m.delete(), 3000));
     } catch (err) {
-      console.error('[remove] error', err);
+      log.error({ err }, 'Failed to remove messages');
       message.channel.send('Failed to remove messages: ' + (err.message || err));
     }
   },

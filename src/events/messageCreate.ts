@@ -1,4 +1,7 @@
+import { getLogger } from '../utils/logger';
 import { CommandModule, EventModule } from '../types/modules';
+
+const log = getLogger('events:messageCreate');
 
 const messageCreateEvent: EventModule = {
   event: 'messageCreate',
@@ -6,11 +9,11 @@ const messageCreateEvent: EventModule = {
     try {
       // Log event
       const authorTag = message?.author?.tag ?? 'unknown';
-      console.log('[EVENT] MESSAGE_CREATE', authorTag, message.channel.id);
+      log.debug({ authorTag, channelId: message?.channel?.id }, 'messageCreate received');
 
       // Ignore messages without an author or while client user not ready
       if (!message.author || !client.user) {
-        console.warn('[messageCreate] Missing message author or client user not ready.');
+        log.warn('Missing message author or client user not ready.');
         return;
       }
 
@@ -33,7 +36,7 @@ const messageCreateEvent: EventModule = {
 
       const commands = client.commands as Map<string, CommandModule> | undefined;
       if (!commands) {
-        console.warn('[messageCreate] Commands collection not initialized.');
+        log.warn('Commands collection not initialized.');
         return;
       }
 
@@ -49,13 +52,13 @@ const messageCreateEvent: EventModule = {
           try {
             member = await membersManager.fetch(message.author.id);
           } catch (err) {
-            console.warn('[messageCreate] Failed to fetch member for permission check:', err);
+            log.warn({ err }, 'Failed to fetch member for permission check');
             return;
           }
         }
 
         if (!member) {
-          console.warn('[messageCreate] Member not found for permission check.');
+          log.warn('Member not found for permission check.');
           return;
         }
 
@@ -64,13 +67,14 @@ const messageCreateEvent: EventModule = {
           roleCache && typeof roleCache.has === 'function' ? roleCache.has(adminRoleId) : false;
         if (!hasRole) {
           await message.channel.send('Kamu tidak punya izin untuk menjalankan command ini.');
+          log.warn({ authorId: message.author.id }, 'Permission denied for command execution');
           return;
         }
       }
 
       await cmd.run(client, message, args);
     } catch (e) {
-      console.error('[messageCreate] error', e);
+      log.error({ err: e }, 'Unexpected error while handling messageCreate');
     }
   },
 };

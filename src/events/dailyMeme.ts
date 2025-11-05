@@ -1,4 +1,5 @@
 import https from 'https';
+import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
 interface CandaanApiResponse {
@@ -14,6 +15,7 @@ const MEME_API_URL = process.env.DAILY_MEME_API_URL ?? DEFAULT_API_URL;
 
 let jobInitialized = false;
 let nextTimeout: NodeJS.Timeout | null = null;
+const log = getLogger('events:dailyMeme');
 
 const fetchMeme = async (): Promise<{ url: string; source?: string }> =>
   new Promise((resolve, reject) => {
@@ -68,14 +70,13 @@ const scheduleNextRun = (callback: () => Promise<void>) => {
     timeStyle: 'short',
     timeZone: 'Asia/Jakarta',
   });
-  console.log(`[DAILY_MEME] Next send scheduled at ${formatter.format(nextRunUtc)} (WIB).`);
+  log.info({ nextRunWIB: formatter.format(nextRunUtc) }, 'Daily meme scheduled');
 
   nextTimeout = setTimeout(() => {
     nextTimeout = null;
     Promise.resolve(callback())
       .catch(err => {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error('[DAILY_MEME] Failed to send meme:', message);
+        log.error({ err }, 'Failed to send meme');
       })
       .finally(() => {
         scheduleNextRun(callback);
@@ -92,7 +93,7 @@ const dailyMemeEvent: EventModule = {
 
     const channelId = process.env.DAILY_MEME_CHANNEL_ID;
     if (!channelId) {
-      console.warn('[DAILY_MEME] Skipping setup: DAILY_MEME_CHANNEL_ID not configured.');
+      log.warn('Skipping setup: DAILY_MEME_CHANNEL_ID not configured.');
       jobInitialized = true;
       return;
     }
@@ -106,7 +107,7 @@ const dailyMemeEvent: EventModule = {
           : null);
 
       if (!channel || typeof (channel as any).send !== 'function') {
-        console.warn('[DAILY_MEME] Target channel not found or not text-based.');
+        log.warn({ channelId }, 'Target channel not found or not text-based');
         return;
       }
 
@@ -122,11 +123,11 @@ const dailyMemeEvent: EventModule = {
       }
 
       await (channel as any).send({ embeds: [embed] });
-      console.log('[DAILY_MEME] Meme sent successfully.');
+      log.info('Daily meme sent successfully');
     };
 
     jobInitialized = true;
-    console.log('[DAILY_MEME] Daily meme scheduler initialized.');
+    log.info('Daily meme scheduler initialized');
     if (nextTimeout) {
       clearTimeout(nextTimeout);
       nextTimeout = null;

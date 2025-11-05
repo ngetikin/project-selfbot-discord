@@ -22,6 +22,11 @@ const OPTIONAL_VARS: EnvCheck[] = [
       'TEXT_PREFIX belum diatur. Command hanya bisa dipicu lewat mention; isi TEXT_PREFIX untuk prefix teks.',
   },
   {
+    key: 'LOG_LEVEL',
+    message:
+      'LOG_LEVEL belum diatur. Pino akan menggunakan level bawaan (debug/non-prod, info/prod). Atur LOG_LEVEL untuk kontrol lebih lanjut.',
+  },
+  {
     key: 'ADMIN_ROLE_ID',
     message:
       'ADMIN_ROLE_ID belum diatur. Guard izin berbasis role akan dilewati karena tidak ada role yang divalidasi.',
