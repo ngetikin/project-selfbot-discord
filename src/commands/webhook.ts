@@ -8,9 +8,15 @@ const webhookCommand: CommandModule = {
   description: 'Kirim pesan ke URL webhook yang dikonfigurasi.',
   run: async (client, message, args) => {
     const text = args.join(' ');
-    if (!text) return message.channel.send('Usage: <@me> webhook <message>');
+    if (!text) {
+      await message.channel.send('Usage: <@me> webhook <message>');
+      return;
+    }
     const url = process.env.WEBHOOK_URL;
-    if (!url) return message.channel.send('Webhook URL belum diset di .env');
+    if (!url) {
+      await message.channel.send('Webhook URL belum diset di .env');
+      return;
+    }
 
     try {
       await fetch(url, {
@@ -19,10 +25,10 @@ const webhookCommand: CommandModule = {
         body: JSON.stringify({ content: text }),
       });
       log.info({ url }, 'Webhook dispatched');
-      message.channel.send('Webhook sent ✅');
+      await message.channel.send('Webhook sent ✅');
     } catch (err) {
       log.error({ err }, 'Failed to send webhook');
-      message.channel.send('Failed to send webhook.');
+      await message.channel.send('Failed to send webhook.');
     }
   },
 };

@@ -1,8 +1,12 @@
-import { RichPresence, CustomStatus, SpotifyRPC } from 'discord.js-selfbot-v13';
+import { CustomStatus, RichPresence, SpotifyRPC } from 'discord.js-selfbot-v13';
+import type { AnyChannel, VoiceBasedChannel } from 'discord.js-selfbot-v13';
 import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
 const log = getLogger('events:ready');
+
+const isVoiceBasedChannel = (channel: AnyChannel | null): channel is VoiceBasedChannel =>
+  Boolean(channel) && 'bitrate' in (channel as VoiceBasedChannel);
 
 const readyEvent: EventModule = {
   event: 'ready',
@@ -10,17 +14,17 @@ const readyEvent: EventModule = {
     log.info({ user: client.user.tag, id: client.user.id }, 'Ready event fired');
 
     if (process.env.VOICE_CHANNEL_ID) {
-      const channel = client.channels.cache.get(process.env.VOICE_CHANNEL_ID);
-      if (channel) {
+      const cachedChannel = client.channels.cache.get(process.env.VOICE_CHANNEL_ID) ?? null;
+      if (isVoiceBasedChannel(cachedChannel)) {
         try {
-          await client.voice.joinChannel(channel, {
+          await client.voice.joinChannel(cachedChannel, {
             selfMute: true,
             selfDeaf: true,
             selfVideo: false,
           });
           log.info({ channelId: process.env.VOICE_CHANNEL_ID }, 'Joined voice channel');
-        } catch (e: any) {
-          log.error({ err: e }, 'Error joining voice channel');
+        } catch (err) {
+          log.error({ err }, 'Error joining voice channel');
         }
       } else {
         log.warn({ channelId: process.env.VOICE_CHANNEL_ID }, 'Voice channel not found in cache');

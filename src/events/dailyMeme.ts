@@ -1,4 +1,5 @@
 import https from 'https';
+import type { AnyChannel, TextBasedChannel } from 'discord.js-selfbot-v13';
 import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
@@ -84,6 +85,9 @@ const scheduleNextRun = (callback: () => Promise<void>) => {
   }, delay);
 };
 
+const isTextChannel = (channel: AnyChannel | null): channel is TextBasedChannel =>
+  Boolean(channel) && 'send' in channel && typeof channel.send === 'function';
+
 const dailyMemeEvent: EventModule = {
   event: 'ready',
   run: async client => {
@@ -100,29 +104,29 @@ const dailyMemeEvent: EventModule = {
 
     const sendDailyMeme = async () => {
       const meme = await fetchMeme();
-      const channel =
-        client.channels.cache.get(channelId) ??
-        (typeof client.channels.fetch === 'function'
-          ? await client.channels.fetch(channelId).catch(() => null)
-          : null);
+      const fromCache = client.channels.cache.get(channelId) ?? null;
+      const channel = isTextChannel(fromCache)
+        ? fromCache
+        : await client.channels.fetch(channelId).catch(() => null);
 
-      if (!channel || typeof (channel as any).send !== 'function') {
+      if (!isTextChannel(channel)) {
         log.warn({ channelId }, 'Target channel not found or not text-based');
         return;
       }
 
-      const embed: Record<string, unknown> = {
+      const embed = {
         title: 'Candaan Pagi',
         image: { url: meme.url },
         color: 0xf09b22,
+        ...(meme.source
+          ? {
+              url: meme.source,
+              footer: { text: meme.source },
+            }
+          : {}),
       };
 
-      if (meme.source) {
-        embed.url = meme.source;
-        embed.footer = { text: meme.source };
-      }
-
-      await (channel as any).send({ embeds: [embed] });
+      await channel.send({ embeds: [embed] });
       log.info('Daily meme sent successfully');
     };
 

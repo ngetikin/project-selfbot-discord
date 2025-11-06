@@ -4,8 +4,8 @@ const helpCommand: CommandModule = {
   name: 'help',
   description: 'Tampilkan daftar command yang tersedia.',
   run: async (client, message) => {
-    const commandsCollection = client.commands as Map<string, CommandModule> | undefined;
-    if (!commandsCollection || commandsCollection.size === 0) {
+    const commandsCollection = client.commands;
+    if (commandsCollection.size === 0) {
       await message.channel.send('Belum ada command yang terdaftar.');
       return;
     }

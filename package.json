@@ -4,6 +4,7 @@
   "description": "Modular Discord selfbot (educational).",
   "main": "dist/index.js",
   "scripts": {
+    "prebuild": "pnpm format:check && pnpm lint && pnpm test",
     "build": "tsc",
     "prestart": "pnpm build",
     "start": "node dist/index.js",

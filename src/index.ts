@@ -1,8 +1,9 @@
 import dotenv from 'dotenv';
 import { Client, Collection } from 'discord.js-selfbot-v13';
+import type { ClientEvents } from 'discord.js-selfbot-v13';
 import fs from 'fs';
 import path from 'path';
-import { CommandModule, EventModule } from './types/modules';
+import { CommandModule, EventModule, SelfbotClient } from './types/modules';
 import logger, { getLogger } from './utils/logger';
 import validateEnv from './utils/validateEnv';
 
@@ -20,8 +21,8 @@ for (const warning of envWarnings) {
   logger.warn({ warning }, 'ENV validation warning');
 }
 
-const client = new Client({ checkUpdate: false }) as any;
-client.commands = client.commands ?? new Collection();
+const client = new Client({ checkUpdate: false }) as SelfbotClient;
+client.commands = client.commands ?? new Collection<string, CommandModule>();
 const appLogger = getLogger('app');
 
 const loadModule = <T>(modulePath: string): T | null => {
@@ -35,6 +36,12 @@ const loadModule = <T>(modulePath: string): T | null => {
 const filterModuleFiles = (files: string[]) =>
   files.filter(file => file.endsWith('.js') || file.endsWith('.ts'));
 
+const registerEvent = <K extends keyof ClientEvents>(eventModule: EventModule<K>) => {
+  client.on(eventModule.event, async (...args: ClientEvents[K]) => {
+    await eventModule.run(client, ...args);
+  });
+};
+
 const cmdsPath = path.join(__dirname, 'commands');
 if (fs.existsSync(cmdsPath)) {
   const commandFiles = filterModuleFiles(fs.readdirSync(cmdsPath));
@@ -43,7 +50,7 @@ if (fs.existsSync(cmdsPath)) {
     const modulePath = path.join(cmdsPath, file);
     const command = loadModule<CommandModule>(modulePath);
     if (command && command.name) {
-      (client.commands as any).set(command.name, command);
+      client.commands.set(command.name, command);
       appLogger.debug({ command: command.name }, 'Registered command');
     }
   }
@@ -58,7 +65,7 @@ if (fs.existsSync(evPath)) {
     const event = loadModule<EventModule>(modulePath);
     if (event?.event && event.run) {
       appLogger.debug({ event: event.event }, 'Registered event handler');
-      client.on(event.event, (...args: unknown[]) => event.run(client, ...args));
+      registerEvent(event);
     }
   }
 }

@@ -1,3 +1,4 @@
+import type { EmojiIdentifierResolvable, GuildEmoji } from 'discord.js-selfbot-v13';
 import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
@@ -21,6 +22,28 @@ const GLOBAL_EMOJI_POOL = [
 
 const log = getLogger('events:autoEmojiReactor');
 
+const toReactionIdentifier = (emoji: EmojiIdentifierResolvable): string | null => {
+  if (typeof emoji === 'string') {
+    return emoji;
+  }
+  if (typeof (emoji as { identifier?: unknown }).identifier === 'string') {
+    return (emoji as { identifier: string }).identifier;
+  }
+  if (
+    emoji &&
+    typeof emoji === 'object' &&
+    'id' in emoji &&
+    'name' in emoji &&
+    typeof emoji.id === 'string' &&
+    emoji.id &&
+    typeof emoji.name === 'string' &&
+    emoji.name
+  ) {
+    return `${emoji.name}:${emoji.id}`;
+  }
+  return null;
+};
+
 const autoEmojiReactor: EventModule = {
   event: 'messageCreate',
   run: async (client, message) => {
@@ -29,17 +52,21 @@ const autoEmojiReactor: EventModule = {
       if (!message.webhookId && message.author.bot) return;
 
       // ambil custom non-animated emoji dari server
-      let emojiPool: any[] = [];
+      const emojiPool: EmojiIdentifierResolvable[] = [];
       if (message.guild) {
-        const customEmojis = message.guild.emojis.cache.filter(e => !e.animated);
+        const customEmojis = message.guild.emojis.cache.filter(
+          (emoji: GuildEmoji) => !emoji.animated,
+        );
         if (customEmojis.size > 0) {
-          emojiPool = emojiPool.concat(Array.from(customEmojis.values()));
+          for (const emoji of customEmojis.values()) {
+            emojiPool.push(emoji);
+          }
         }
       }
 
       // fallback kalau ga ada emoji server
       if (emojiPool.length === 0) {
-        emojiPool = GLOBAL_EMOJI_POOL;
+        emojiPool.push(...GLOBAL_EMOJI_POOL);
       }
 
       // tentukan berapa banyak emoji (acak antara 2–5)
@@ -52,7 +79,12 @@ const autoEmojiReactor: EventModule = {
 
       for (const e of picks) {
         try {
-          await message.react(e.id ? `${e.name}:${e.id}` : e);
+          const reaction = toReactionIdentifier(e);
+          if (!reaction) {
+            log.warn('Skipping reaction with unsupported emoji payload.');
+            continue;
+          }
+          await message.react(reaction);
         } catch (err) {
           log.error({ err }, 'Failed to add reaction');
         }
