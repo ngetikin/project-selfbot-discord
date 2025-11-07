@@ -2,64 +2,49 @@
 
 ## 1. Gambaran Umum Proyek
 
-Proyek ini adalah selfbot Discord modular untuk tujuan edukasi, ditulis sepenuhnya dengan TypeScript (CommonJS) dan dijalankan di atas Node.js 20+ menggunakan pustaka `discord.js-selfbot-v13`. Runtime memanfaatkan loader dinamis untuk command/event, logger terstruktur Pino (`pino-pretty` di dev), validasi environment dasar, dan utilitas seperti scheduler meme harian, auto emoji reactor, serta integrasi webhook sederhana. Tooling standar mencakup `pnpm`, `tsx` untuk mode watch, `ts-jest` untuk testing, ESLint flat config dengan `typescript-eslint`, Prettier, serta Husky + lint-staged. CI GitHub Actions (`.github/workflows/ci.yml`) mereplikasi lint → test → build pada setiap push/pull request ke `main`/`dev`.
+Repositori ini berisi selfbot Discord modular berbasis TypeScript (CommonJS) yang dijalankan lewat Node.js ≥ 20.11 menggunakan `discord.js-selfbot-v13`. Entry point (`src/index.ts`) memuat `.env`, memvalidasi konfigurasi, membuat `SelfbotClient`, lalu melakukan auto-discovery command (`src/commands/`) dan event (`src/events/`). Tooling utama: `pnpm`, `tsx` untuk mode watch, Pino logger (`pino-pretty` di dev), Jest + ts-jest untuk pengujian, ESLint flat config, Prettier, serta Husky hooks. CI Github Actions sekarang hanya menjalankan `pnpm build`, namun karena skrip build men-trigger `prebuild` (`format:check`, `lint`, `test`), seluruh pemeriksaan tetap tercakup. Skrip `auto_pull.sh` diperuntukkan Termux/PM2 dan menargetkan branch `stable` dengan pipeline reset → install → restart setiap 24 jam.
 
 ## 2. Struktur dan Modul
 
-- `src/index.ts` – Entrypoint yang memuat `.env`, menjalankan `validateEnv`, membuat `SelfbotClient`, menginisialisasi `client.commands`, dan melakukan auto-discovery module commands/events via `fs.readdirSync` + `require`. Menangani login dan logging startup.
-- `src/commands/` – Command modular:
-  - `clearMessage.ts` menghapus sampai 100 pesan milik akun selfbot pada kanal aktif dengan feedback ke user.
-  - `help.ts` membuat ringkasan command + prefix yang tersedia.
-  - `serverinfo.ts` mengirim metadata guild (nama, ID, owner, jumlah member, waktu pembuatan).
-  - `webhook.ts` meneruskan teks ke `WEBHOOK_URL` via `fetch` dan melaporkan hasil.
-- `src/events/` – Event hook mandiri:
-  - `messageCreate.ts` dispatcher command (prefix mention/opsional), guard role `ADMIN_ROLE_ID`, dan logging granular.
-  - `autoEmojiReactor.ts` menambahkan reaksi emoji acak pada channel tertentu dengan fallback emoji global.
-  - `dailyMeme.ts` scheduler 06.00 WIB yang menarik gambar dari Candaan API (atau override env), menyimpan state timer, serta mengekspor `resetDailyMemeScheduler` untuk test.
-  - `ready.ts` melakukan auto join voice channel + status rotator (Rich Presence, CustomStatus, SpotifyRPC) saat variabel diaktifkan.
-  - `logger.ts` mencatat event `raw` untuk keperluan debugging.
-- `src/utils/` – `logger.ts` (wrapper Pino + child logger helper) dan `validateEnv.ts` (validasi wajib TOKEN + warning opsional).
-- `src/types/` – Interface `CommandModule`/`EventModule` dan augmentasi tipe untuk `discord.js-selfbot-v13`; root `types/` disiapkan untuk deklarasi tambahan namun saat ini kosong.
-- `tests/` – Suite Jest per use-case (`autoEmojiReactor`, `dailyMeme`, `messageCreate`, commands) dengan logger dimock; `tests/setup.ts` mengisi env default.
-- `config files` – `tsconfig.json` (strict=false), `eslint.config.mjs`, Prettier config/ignore, `jest.config.cjs`, `.env.example`.
-- `.husky/` – Hook `commit-msg`, `pre-commit`, `pre-push`; pre-commit kini memakai shebang valid dan menjalankan `pnpm lint-staged` (skip otomatis bila commit diawali `wip:`).
-- `.github/workflows/ci.yml` – Pipeline lint/test/build.
-- `auto_pull.sh` – Skrip Termux yang sekarang melakukan `git fetch`, fast-forward merge (tanpa `reset --hard`), deteksi working tree kotor, install dependen via `pnpm install --frozen-lockfile`, serta restart PM2 sebelum tidur configurable (`AUTO_PULL_INTERVAL_HOURS`, default 6 jam).
-- `dist/` – Output hasil `pnpm build`.
+- `src/index.ts` – memuat env dengan `dotenv`, memanggil `validateEnv`, menginisialisasi Discord selfbot client, mendaftarkan command/event dari `dist` secara dinamis, dan memulai login.
+- `src/commands/` – modul perintah (`clearMessage`, `help`, `serverinfo`, `webhook`) mengekspor `{ name, description?, run }`.
+- `src/events/` – handler `messageCreate` (dispatcher + role guard), `autoEmojiReactor`, `dailyMeme` (scheduler 06.00 WIB dengan helper reset), `ready` (join voice + rotasi status), dan `logger` (raw packet log).
+- `src/utils/` – `logger.ts` (wrapper Pino) dan `validateEnv.ts` (validasi TOKEN + warning opsional). Tersedia script CLI `scripts/validateEnv.ts` yang bisa dijalankan via `pnpm validate:env`.
+- `tests/` – suite Jest yang memverifikasi command utama, dispatcher, auto emoji, dan scheduler; logger dimock agar output bersih.
+- Tooling & konfigurasi – `tsconfig.json` (strict=false), `eslint.config.mjs`, `jest.config.cjs`, Prettier config, `.env.example`, Husky hooks (`pre-commit` lint-staged, `pre-push` → `pnpm build`), serta workflow CI yang mengaktifkan Corepack, menyiapkan pnpm cache manual, lalu menjalankan build tunggal.
+- `auto_pull.sh` – skrip bash berwarna untuk server Termux yang melakukan `git reset --hard origin/stable`, optional `pnpm install` jika `package.json` berubah, restart PM2 (`index.js`), lalu tidur 24 jam.
 
 ## 3. Kondisi Saat Ini
 
 **Kekuatan**
 
-- Arsitektur modular rapi: loader command/event tunggal dengan kontrak tipe di `src/types`.
-- Logging konsisten via Pino + child logger sehingga troubleshooting relatif mudah.
-- Guard keamanan awal: hanya memproses command dari akun selfbot, dukungan role gating, dan peringatan env.
-- Suite Jest sudah mencakup command utama dan mayoritas event critical (dispatcher, scheduler, emoji reactor).
-- Tooling modern (pnpm, tsx, ESLint typed, Prettier) + workflow CI memastikan lint/test/build otomatis; `pnpm validate:env` menambah keamanan konfigurasi.
-- Dokumentasi README/AGENTS diperbarui dengan kebutuhan Node 20+, arsitektur loader, langkah testing, dan panduan penggunaan skrip baru.
+- Arsitektur modular jelas; loader otomatis + kontrak tipe (`src/types/modules.ts`) memudahkan penambahan fitur baru.
+- Tooling terpadu: `pnpm build` menjalankan format/lint/test sebelum `tsc`, sehingga satu perintah menjaga kualitas baik di lokal maupun CI/Husky pre-push.
+- Script `pnpm validate:env` memudahkan memastikan konfigurasi wajib ada sebelum runtime.
+- Dokumentasi README sudah mencantumkan persyaratan Node 20+, perintah utama, serta gambaran arsitektur command/event.
+- Husky pre-commit menjaga gaya kode melalui lint-staged dan dapat dilewati dengan prefiks `wip:` sesuai kebutuhan eksplorasi cepat.
 
 **Kelemahan / Risiko**
 
-- `tsconfig.json` masih `strict: false`; banyak aturan `@typescript-eslint` dimatikan sehingga potensi bug runtime tidak terdeteksi selama build.
-- `validateEnv` baru sebatas pemeriksaan string kosong; belum ada validasi format ID Discord, URL webhook, atau relasi antar-variabel (mis. `VOICE_CHANNEL_ID` wajib saat rotator suara aktif).
-- `webhook.ts` tidak memeriksa status HTTP/response body dan tidak ada timeout sehingga error tetap generik dan sulit dirunut.
-- `dailyMeme` memakai `https.get` tanpa AbortController atau retry; ketika API menggantung scheduler bisa terblokir, dan state `jobInitialized` masih global (tidak mendukung perubahan env setelah startup).
-- `autoEmojiReactor` menggunakan `Array.sort` dengan comparator acak untuk memilih emoji; pendekatan ini O(n log n) dan bisa boros saat daftar emoji besar.
-- Folder `types/` masih kosong; tiada dokumentasi penjelasan tipe tambahan walau folder sudah disediakan.
+- `auto_pull.sh` kembali memakai `git reset --hard` dan langsung menjalankan `git pull` setelahnya; setiap perubahan lokal (mis. `.env`, patch manual) akan hilang. Skrip ini juga selalu restart dengan `pm2 start index.js`, bukan `dist/index.js`, sehingga runtime bisa menggunakan sumber TypeScript mentah.
+- `auto_pull.sh` mengunci `PROJECT_DIR`, `BRANCH`, dan `APP_NAME` secara hard coded tanpa opsi override atau pengecekan lingkungan; tidak ada proteksi terhadap kegagalan `pnpm install` atau status repo kotor.
+- `tsconfig.json` masih menggunakan `strict: false`, dan ESLint menonaktifkan sederet aturan `@typescript-eslint/*` sehingga banyak potensi bug tipe yang tidak terdeteksi.
+- `autoEmojiReactor` terus memakai `Array.sort(() => Math.random() - 0.5)` untuk memilih emoji, yang tidak efisien pada daftar besar dan menghasilkan bias.
+- Perintah `pnpm test` (dan otomatis `pnpm build`) sering gagal di lingkungan multiprocess karena worker Jest crash tanpa pesan; perlu menjalankan `jest --runInBand` agar hijau. Kondisi ini berpotensi menyebabkan CI baru (yang hanya memanggil `pnpm build`) memerah.
+- Dokumentasi contributor (AGENTS) sebelumnya mengklaim pre-push menjalankan lint/test/build terpisah dan auto_pull aman dari hard reset; fakta repo terbaru berbeda sehingga panduan perlu diselaraskan.
 
 ## 4. Rencana & Saran Pengembangan
 
-1. **Naikkan standar tipe** – Aktifkan `strict: true` (minimal `strictNullChecks` + `noImplicitAny`) dan pulihkan aturan lint penting secara bertahap agar command/event baru memiliki jaminan tipe lebih kuat.
-2. **Validasi konfigurasi lebih dalam** – Perluas `validateEnv` untuk memeriksa pola ID Discord (saluran, role), URL webhook valid, serta dependensi antar flag (mis. `VOICE_CHANNEL_ID` wajib ketika `AUTO_STATUS_ROTATOR` aktif). Tambahkan opsi `--json` pada `pnpm validate:env` untuk integrasi CI.
-3. **Perkeras `webhook.ts`** – Tambahkan timeout (AbortController), cek `response.ok`, log status/body saat gagal, dan kirim pesan ke channel dengan detail minimal agar pengguna tahu apa yang keliru.
-4. **Resiliensi scheduler** – Bungkus `https.get` dengan helper yang mendukung timeout dan retry eksponensial; simpan timestamp terakhir dikirim untuk menghindari duplikasi setelah restart dan izinkan reload env tanpa restart proses penuh.
-5. **Optimasi auto emoji** – Ganti `Array.sort` acak dengan shuffle ala Fisher-Yates atau pilih `Set` berbasis `Math.random` untuk menekan kompleksitas.
-6. **Isi folder `types/`** – Tambahkan d.ts tambahan (mis. helper Rich Presence, custom config) agar kontributor tahu tujuan folder tersebut.
+1. **Sinkronisasi dokumentasi & skrip** – Jelaskan secara eksplisit bahwa `auto_pull.sh` melakukan reset destruktif pada branch `stable` dan hanya cocok untuk lingkungan tanpa perubahan lokal. Pertimbangkan varian aman (fast-forward + deteksi dirty tree) bila akan dipakai luas.
+2. **Hardening auto_pull** – Tawarkan konfigurasi via variabel lingkungan, ganti `git reset --hard` dengan merge aman, dan arahkan PM2 untuk menjalankan `dist/index.js`. Tambahkan logging kegagalan `pnpm install` + fallback.
+3. **Perketat kualitas kode** – Aktifkan opsi `strict` (minimal `strictNullChecks`, `noImplicitAny`) dan hidupkan kembali aturan lint penting (`no-unsafe-*`). Dokumentasikan rencana migrasi agar kontributor tahu prioritasnya.
+4. **Optimasi event** – Ganti mekanisme pemilihan emoji dengan shuffle Fisher-Yates atau `Set` sampling; tambahkan limiter untuk channel ramai sehingga bot tidak kelebihan request.
+5. **Observability & CI** – Walau `pnpm build` sudah menjalankan lint/test, pertimbangkan menambahkan langkah terpisah di workflow agar kegagalan lint/test terlihat jelas di UI Actions. Laporkan output `pnpm validate:env` di pipeline untuk catching misconfig dini.
 
 ## 5. Langkah Berikutnya
 
-1. Implementasi bertahap opsi `strict` + audit lint rules agar CI menangkap issue tipe lebih awal.
-2. Kembangkan `validateEnv` supaya memverifikasi format ID/URL, tambahkan mode non-interaktif untuk CI, dan dokumentasikan contoh output di README.
-3. Perbarui `webhook.ts` dengan timeout + pemeriksaan `response.ok`, logging kaya, serta pesan error terperinci untuk user.
-4. Perkuat `dailyMeme` menggunakan AbortController + retry dan mekanisme reload konfigurasi tanpa restart proses penuh.
-5. Optimalkan pemilihan emoji di `autoEmojiReactor` agar tidak melakukan sort acak terhadap keseluruhan koleksi.
+1. Update dokumentasi (README/AGENTS) untuk menggambarkan kondisi hook & auto_pull terbaru lalu sebutkan risiko reset keras.
+2. Refactor `auto_pull.sh` agar mendukung konfigurasi via env dan menghindari hilangnya perubahan lokal; tambahkan opsi `--dry-run` atau logging sebelum eksekusi.
+3. Aktifkan `strictNullChecks` + `noImplicitAny`, perbaiki error yang muncul, lalu lanjutkan ke aturan lint yang selama ini dimatikan.
+4. Optimalkan `autoEmojiReactor` dan tambahkan test untuk memastikan algoritma baru tidak bias terhadap emoji tertentu.
+5. Perluas `pnpm validate:env` agar memeriksa format ID Discord/URL webhook; jalankan skrip ini di CI sebelum build untuk mencegah runtime failure akibat konfigurasi kosong.
