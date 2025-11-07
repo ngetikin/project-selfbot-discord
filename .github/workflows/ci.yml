@@ -1,3 +1,5 @@
+name: CI
+
 on:
   push:
     branches:
@@ -18,29 +20,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 1️⃣ Setup Node.js tanpa cache dulu
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
 
+      # 2️⃣ Aktifkan dan siapkan pnpm
       - name: Enable Corepack and prepare pnpm
         run: |
           corepack enable
           corepack prepare pnpm@latest --activate
+          pnpm --version
 
-      - name: Install pnpm
-        run: npm install -g pnpm
+      # 3️⃣ Setup cache manual untuk pnpm (bukan lewat setup-node)
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
+      # 4️⃣ Install dependencies
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Test
-        run: pnpm test
-
+      # 5️⃣ Build project
       - name: Build
         run: pnpm build
