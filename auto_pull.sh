@@ -54,5 +54,5 @@ else
 fi
 
 # Rehat 24 jam
-echo -e "${YELLOW}[AUTO_PULL] Rehat selama 12 jam...${RESET}"
-sleep 12h
+echo -e "${YELLOW}[AUTO_PULL] Rehat selama 24 jam...${RESET}"
+sleep 24h
