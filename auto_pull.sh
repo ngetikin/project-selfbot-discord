@@ -1,40 +1,58 @@
 #!/bin/bash
 # auto_pull.sh
-set -euo pipefail
+# Script otomatis untuk sync project dan restart bot di Termux
+# Branch: stable
 
-PROJECT_DIR=${PROJECT_DIR:-/data/data/com.termux/files/home/selfbot-discord}
-BRANCH=${AUTO_PULL_BRANCH:-main}
-SLEEP_HOURS=${AUTO_PULL_INTERVAL_HOURS:-6}
+set -e  # stop jika ada error
 
-cd "$PROJECT_DIR"
+# Warna terminal
+GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+RED="\033[1;31m"
+RESET="\033[0m"
 
-echo "[AUTO_PULL] Checking for updates on branch $BRANCH..."
+PROJECT_DIR="/data/data/com.termux/files/home/selfbot-discord"
+BRANCH="stable"
+APP_NAME="selfbot-discord"
+
+echo -e "${YELLOW}[AUTO_PULL] Memulai auto-pull untuk branch '$BRANCH'...${RESET}"
+
+# Masuk ke folder project
+cd "$PROJECT_DIR" || { echo -e "${RED}Gagal masuk ke direktori project.${RESET}"; exit 1; }
+
+# Ambil update terbaru
 git fetch origin "$BRANCH"
 
 LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse "origin/$BRANCH")
+REMOTE=$(git rev-parse origin/"$BRANCH")
 
 if [ "$LOCAL" != "$REMOTE" ]; then
-  if [ -n "$(git status --porcelain)" ]; then
-    echo "[AUTO_PULL] Detected local changes. Please review/commit them before auto-sync."
-    exit 1
+  echo -e "${YELLOW}[AUTO_PULL] Ada update di branch '$BRANCH', melakukan sinkronisasi...${RESET}"
+
+  # Simpan hash package.json sebelum update
+  OLD_PKG_HASH=$(sha1sum package.json 2>/dev/null | awk '{print $1}')
+
+  # Hard reset ke remote branch
+  git reset --hard origin/"$BRANCH"
+  git pull origin "$BRANCH"
+
+  # Cek apakah package.json berubah
+  NEW_PKG_HASH=$(sha1sum package.json 2>/dev/null | awk '{print $1}')
+  if [ "$OLD_PKG_HASH" != "$NEW_PKG_HASH" ]; then
+    echo -e "${YELLOW}[AUTO_PULL] package.json berubah, menginstall dependensi...${RESET}"
+    pnpm install
   fi
 
-  echo "[AUTO_PULL] Updates found. Performing fast-forward merge..."
-  git merge --ff-only "origin/$BRANCH"
+  # Restart pakai PM2
+  echo -e "${YELLOW}[AUTO_PULL] Merestart bot...${RESET}"
+  pm2 restart "$APP_NAME" || pm2 start index.js --name "$APP_NAME"
 
-  if [ -f pnpm-lock.yaml ]; then
-    echo "[AUTO_PULL] Installing dependencies (frozen lockfile)..."
-    pnpm install --frozen-lockfile
-  fi
-
-  echo "[AUTO_PULL] Restarting process via PM2..."
-  pm2 restart selfbot-discord || pm2 start dist/index.js --name "selfbot-discord"
-  echo "[AUTO_PULL] Bot updated & restarted."
+  echo -e "${GREEN}[AUTO_PULL] Bot berhasil di-update & restart.${RESET}"
 else
-  echo "[AUTO_PULL] Already up-to-date. Restarting to keep process fresh..."
-  pm2 restart selfbot-discord || pm2 start dist/index.js --name "selfbot-discord"
+  echo -e "${GREEN}[AUTO_PULL] Tidak ada update di branch '$BRANCH', tetap restart untuk jaga-jaga.${RESET}"
+  pm2 restart "$APP_NAME" || pm2 start index.js --name "$APP_NAME"
 fi
 
-echo "[AUTO_PULL] Sleeping for ${SLEEP_HOURS}h before next check..."
-sleep "${SLEEP_HOURS}h"
+# Rehat 24 jam
+echo -e "${YELLOW}[AUTO_PULL] Rehat selama 24 jam...${RESET}"
+sleep 24h
