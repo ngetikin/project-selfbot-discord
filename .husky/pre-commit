@@ -1,4 +1,7 @@
-#j/usr/bin/env sh
+#!/usr/bin/env sh
+if [ "${HUSKY:-1}" = "0" ]; then
+  exit 0
+fi
 
 set -e
 

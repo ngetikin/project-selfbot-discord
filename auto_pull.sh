@@ -1,37 +1,40 @@
 #!/bin/bash
 # auto_pull.sh
+set -euo pipefail
 
-# Masuk ke folder project
-cd /data/data/com.termux/files/home/selfbot-discord || exit
+PROJECT_DIR=${PROJECT_DIR:-/data/data/com.termux/files/home/selfbot-discord}
+BRANCH=${AUTO_PULL_BRANCH:-main}
+SLEEP_HOURS=${AUTO_PULL_INTERVAL_HOURS:-6}
 
-# Ambil update terbaru dari remote
-git fetch origin main
+cd "$PROJECT_DIR"
 
-# Cek apakah ada perbedaan antara local dan remote
+echo "[AUTO_PULL] Checking for updates on branch $BRANCH..."
+git fetch origin "$BRANCH"
+
 LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse origin/main)
+REMOTE=$(git rev-parse "origin/$BRANCH")
 
 if [ "$LOCAL" != "$REMOTE" ]; then
-  echo "[AUTO_PULL] Ada update di branch main, sync dulu..."
-
-  # Hard reset ke remote biar bersih
-  git reset --hard origin/main
-  git pull origin main
-
-  # Optional: install dependensi kalau ada perubahan package.json
-  if [ -f package.json ]; then
-    pnpm install
+  if [ -n "$(git status --porcelain)" ]; then
+    echo "[AUTO_PULL] Detected local changes. Please review/commit them before auto-sync."
+    exit 1
   fi
 
-  # Restart pakai PM2
-  pm2 restart selfbot-discord || pm2 start index.js --name "selfbot-discord"
+  echo "[AUTO_PULL] Updates found. Performing fast-forward merge..."
+  git merge --ff-only "origin/$BRANCH"
 
-  echo "[AUTO_PULL] Bot berhasil di-update & restart."
+  if [ -f pnpm-lock.yaml ]; then
+    echo "[AUTO_PULL] Installing dependencies (frozen lockfile)..."
+    pnpm install --frozen-lockfile
+  fi
+
+  echo "[AUTO_PULL] Restarting process via PM2..."
+  pm2 restart selfbot-discord || pm2 start dist/index.js --name "selfbot-discord"
+  echo "[AUTO_PULL] Bot updated & restarted."
 else
-  echo "[AUTO_PULL] Tidak ada update, skip restart."
-  pm2 restart selfbot-discord || pm2 start index.js --name "selfbot-discord"
+  echo "[AUTO_PULL] Already up-to-date. Restarting to keep process fresh..."
+  pm2 restart selfbot-discord || pm2 start dist/index.js --name "selfbot-discord"
 fi
 
-# kasih rehat 6 jam
-echo "[AUTO_PULL] Rehat 24 jam..."
-sleep 5h
+echo "[AUTO_PULL] Sleeping for ${SLEEP_HOURS}h before next check..."
+sleep "${SLEEP_HOURS}h"
