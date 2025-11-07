@@ -85,4 +85,5 @@ pm2 restart selfbot
 Selamat ngulik! Ingat selalu konsekuensi selfbot di platform Discord. :)
 
 ## 🧑‍💻 Kontributor
+
 Dibuat oleh Ngetikin Studio sebagai proyek pembelajaran web dasar.
