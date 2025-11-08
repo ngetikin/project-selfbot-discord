@@ -19,10 +19,11 @@ Repositori ini berisi selfbot Discord modular berbasis TypeScript (CommonJS) yan
 **Kekuatan**
 
 - Arsitektur modular jelas; loader otomatis + kontrak tipe (`src/types/modules.ts`) memudahkan penambahan fitur baru.
-- Tooling terpadu: `pnpm build` menjalankan format/lint/test sebelum `tsc`, sehingga satu perintah menjaga kualitas baik di lokal maupun CI/Husky pre-push.
+- Tooling terpadu: `pnpm build` menjalankan format/lint/test sequential sebelum `tsc`, sehingga satu perintah menjaga kualitas baik di lokal maupun CI/Husky pre-push.
 - Script `pnpm validate:env` memudahkan memastikan konfigurasi wajib ada sebelum runtime.
 - Dokumentasi README sudah mencantumkan persyaratan Node 20+, perintah utama, serta gambaran arsitektur command/event.
 - Husky pre-commit menjaga gaya kode melalui lint-staged dan dapat dilewati dengan prefiks `wip:` sesuai kebutuhan eksplorasi cepat.
+- Masalah Jest worker crash sudah diatasi dengan menjalankan `jest --runInBand`, membuat `pnpm test` dan `pnpm build` stabil lagi di lingkungan terbatas.
 
 **Kelemahan / Risiko**
 
@@ -30,8 +31,12 @@ Repositori ini berisi selfbot Discord modular berbasis TypeScript (CommonJS) yan
 - `auto_pull.sh` mengunci `PROJECT_DIR`, `BRANCH`, dan `APP_NAME` secara hard coded tanpa opsi override atau pengecekan lingkungan; tidak ada proteksi terhadap kegagalan `pnpm install` atau status repo kotor.
 - `tsconfig.json` masih menggunakan `strict: false`, dan ESLint menonaktifkan sederet aturan `@typescript-eslint/*` sehingga banyak potensi bug tipe yang tidak terdeteksi.
 - `autoEmojiReactor` terus memakai `Array.sort(() => Math.random() - 0.5)` untuk memilih emoji, yang tidak efisien pada daftar besar dan menghasilkan bias.
-- Perintah `pnpm test` (dan otomatis `pnpm build`) sering gagal di lingkungan multiprocess karena worker Jest crash tanpa pesan; perlu menjalankan `jest --runInBand` agar hijau. Kondisi ini berpotensi menyebabkan CI baru (yang hanya memanggil `pnpm build`) memerah.
-- Dokumentasi contributor (AGENTS) sebelumnya mengklaim pre-push menjalankan lint/test/build terpisah dan auto_pull aman dari hard reset; fakta repo terbaru berbeda sehingga panduan perlu diselaraskan.
+- Workflow CI (GitHub Actions) dan Husky pre-push kini hanya menjalankan `pnpm build` tanpa menampilkan status format/lint/test secara terpisah di log; bila format/lint gagal, kegagalan tertutup oleh `prebuild` sehingga debugging di UI CI kurang jelas.
+- `auto_pull.sh` kembali memakai `git reset --hard` dan langsung menjalankan `git pull` setelahnya; setiap perubahan lokal (mis. `.env`, patch manual) akan hilang. Skrip ini juga selalu restart dengan `pm2 start index.js`, bukan `dist/index.js`, sehingga runtime bisa menggunakan sumber TypeScript mentah.
+- `auto_pull.sh` mengunci `PROJECT_DIR`, `BRANCH`, dan `APP_NAME` secara hard coded tanpa opsi override atau pengecekan lingkungan; tidak ada proteksi terhadap kegagalan `pnpm install` atau status repo kotor.
+- `tsconfig.json` masih menggunakan `strict: false`, dan ESLint menonaktifkan sederet aturan `@typescript-eslint/*` sehingga banyak potensi bug tipe yang tidak terdeteksi.
+- `autoEmojiReactor` terus memakai `Array.sort(() => Math.random() - 0.5)` untuk memilih emoji, yang tidak efisien pada daftar besar dan menghasilkan bias.
+- Dokumentasi contributor (AGENTS) sebelumnya mengklaim pre-push menjalankan lint/test/build terpisah dan auto_pull aman dari hard reset; fakta repo terbaru berbeda sehingga panduan perlu diselaraskan (catatan sudah diperbarui tetapi tetap perlu tindak lanjut kode).
 
 ## 4. Rencana & Saran Pengembangan
 
@@ -48,3 +53,4 @@ Repositori ini berisi selfbot Discord modular berbasis TypeScript (CommonJS) yan
 3. Aktifkan `strictNullChecks` + `noImplicitAny`, perbaiki error yang muncul, lalu lanjutkan ke aturan lint yang selama ini dimatikan.
 4. Optimalkan `autoEmojiReactor` dan tambahkan test untuk memastikan algoritma baru tidak bias terhadap emoji tertentu.
 5. Perluas `pnpm validate:env` agar memeriksa format ID Discord/URL webhook; jalankan skrip ini di CI sebelum build untuk mencegah runtime failure akibat konfigurasi kosong.
+6. Perbarui workflow CI serta Husky pre-push agar mengeksekusi format/lint/test sebagai langkah tersendiri (atau menambahkan logging yang menonjol) sehingga kegagalan terlihat jelas dari interface Actions/Git tanpa perlu membaca log build panjang.
