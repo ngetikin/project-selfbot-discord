@@ -1,5 +1,5 @@
 import { CustomStatus, RichPresence, SpotifyRPC } from 'discord.js-selfbot-v13';
-import type { AnyChannel, VoiceBasedChannel } from 'discord.js-selfbot-v13';
+import type { AnyChannel, Client, VoiceBasedChannel } from 'discord.js-selfbot-v13';
 import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
@@ -8,9 +8,10 @@ const log = getLogger('events:ready');
 const isVoiceBasedChannel = (channel: AnyChannel | null): channel is VoiceBasedChannel =>
   Boolean(channel) && 'bitrate' in (channel as VoiceBasedChannel);
 
-const readyEvent: EventModule = {
+const readyEvent: EventModule<'ready'> = {
   event: 'ready',
-  run: async client => {
+  run: async (client, _readyClient?: Client) => {
+    void _readyClient;
     const selfUser = client.user;
     if (!selfUser) {
       log.error('Client user missing during ready event.');

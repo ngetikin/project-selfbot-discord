@@ -44,7 +44,7 @@ describe('dailyMeme event', () => {
       },
     };
 
-    await dailyMemeEvent.run(client as any);
+    await dailyMemeEvent.run(client as any, client as any);
 
     expect(getSpy).not.toHaveBeenCalled();
   });
@@ -76,7 +76,7 @@ describe('dailyMeme event', () => {
       .spyOn(Date, 'now')
       .mockReturnValue(new Date('2025-01-01T00:00:00Z').getTime());
 
-    await dailyMemeEvent.run(client as any);
+    await dailyMemeEvent.run(client as any, client as any);
 
     await jest.runOnlyPendingTimersAsync();
 

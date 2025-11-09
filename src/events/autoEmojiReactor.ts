@@ -1,4 +1,4 @@
-import type { EmojiIdentifierResolvable, GuildEmoji } from 'discord.js-selfbot-v13';
+import type { EmojiIdentifierResolvable, GuildEmoji, Message } from 'discord.js-selfbot-v13';
 import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
@@ -53,9 +53,9 @@ const sampleEmojis = (pool: EmojiIdentifierResolvable[], take: number) => {
   return copied.slice(0, take);
 };
 
-const autoEmojiReactor: EventModule = {
+const autoEmojiReactor: EventModule<'messageCreate'> = {
   event: 'messageCreate',
-  run: async (client, message) => {
+  run: async (client, message: Message) => {
     try {
       if (message.channel.id !== process.env.EMOJI_CHANNEL_ID) return;
       if (!message.webhookId && message.author.bot) return;
