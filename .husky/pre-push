@@ -8,4 +8,7 @@ if printf '%s' "$last_commit_msg" | grep -qi '^wip:'; then
   exit 0
 fi
 
-pnpm build
+pnpm format:check
+pnpm lint
+pnpm test
+pnpm compile

@@ -46,6 +46,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # 5️⃣ Build project
-      - name: Build
-        run: pnpm build
+      # 5️⃣ Format check
+      - name: Format check
+        run: pnpm format:check
+
+      # 6️⃣ Lint
+      - name: Lint
+        run: pnpm lint
+
+      # 7️⃣ Test
+      - name: Test
+        run: pnpm test
+
+      # 8️⃣ Type-check / compile
+      - name: Compile
+        run: pnpm compile

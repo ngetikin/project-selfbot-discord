@@ -16,6 +16,7 @@
     "test": "jest --runInBand",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
+    "compile": "tsc",
     "validate:env": "tsx scripts/validateEnv.ts",
     "prepare": "husky"
   },
