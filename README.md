@@ -26,7 +26,7 @@ Repositori dari ngetikin ini adalah versi TypeScript dari selfbot yang modular. 
    pnpm install
    cp .env.example .env
    ```
-2. **Atur `.env`** minimal isi `TOKEN`. Variabel lain opsional (`WEBHOOK_URL`, `ADMIN_ROLE_ID`, `EMOJI_CHANNEL_ID`, dll). Jalankan `pnpm validate:env` untuk memastikan konfigurasi sudah lengkap sebelum start.
+2. **Atur `.env`** minimal isi `TOKEN`. Variabel lain opsional (`WEBHOOK_URL`, `ADMIN_ROLE_ID`, `EMOJI_CHANNEL_ID`, dll). Jalankan `pnpm validate:env` untuk memastikan konfigurasi sudah lengkap dan ID Discord/URL webhook valid sebelum start.
 3. **Perintah penting**
    - `pnpm dev` – mode watch dengan reload.
    - `pnpm lint` – cek style + aturan TypeScript.

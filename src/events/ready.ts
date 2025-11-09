@@ -11,7 +11,13 @@ const isVoiceBasedChannel = (channel: AnyChannel | null): channel is VoiceBasedC
 const readyEvent: EventModule = {
   event: 'ready',
   run: async client => {
-    log.info({ user: client.user.tag, id: client.user.id }, 'Ready event fired');
+    const selfUser = client.user;
+    if (!selfUser) {
+      log.error('Client user missing during ready event.');
+      return;
+    }
+
+    log.info({ user: selfUser.tag, id: selfUser.id }, 'Ready event fired');
 
     if (process.env.VOICE_CHANNEL_ID) {
       const cachedChannel = client.channels.cache.get(process.env.VOICE_CHANNEL_ID) ?? null;
@@ -47,7 +53,7 @@ const readyEvent: EventModule = {
           .setDetails('Song')
           .setStartTimestamp(Date.now());
 
-        client.user.setPresence({ activities: [rp, custom, spotify] });
+        selfUser.setPresence({ activities: [rp, custom, spotify] });
         log.info('Status rotator initialized');
       } catch (err) {
         log.error({ err }, 'Status rotator error');

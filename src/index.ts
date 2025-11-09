@@ -63,16 +63,20 @@ if (fs.existsSync(evPath)) {
   for (const file of eventFiles) {
     const modulePath = path.join(evPath, file);
     const event = loadModule<EventModule>(modulePath);
-    if (event?.event && event.run) {
+    if (event?.event) {
       appLogger.debug({ event: event.event }, 'Registered event handler');
       registerEvent(event);
     }
   }
 }
 
-client.once('ready', () =>
-  appLogger.info({ user: client.user.tag, id: client.user.id }, 'Client ready'),
-);
+client.once('ready', () => {
+  if (!client.user) {
+    appLogger.error('Client ready event emitted without user context.');
+    return;
+  }
+  appLogger.info({ user: client.user.tag, id: client.user.id }, 'Client ready');
+});
 
 client
   .login(process.env.TOKEN)

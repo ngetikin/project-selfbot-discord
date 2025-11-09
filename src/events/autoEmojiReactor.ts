@@ -44,6 +44,15 @@ const toReactionIdentifier = (emoji: EmojiIdentifierResolvable): string | null =
   return null;
 };
 
+const sampleEmojis = (pool: EmojiIdentifierResolvable[], take: number) => {
+  const copied = [...pool];
+  for (let i = copied.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied.slice(0, take);
+};
+
 const autoEmojiReactor: EventModule = {
   event: 'messageCreate',
   run: async (client, message) => {
@@ -71,11 +80,8 @@ const autoEmojiReactor: EventModule = {
 
       // tentukan berapa banyak emoji (acak antara 2–5)
       const maxReact = Math.min(15, emojiPool.length);
-      const howMany = Math.floor(Math.random() * maxReact) + 1;
-
-      // pilih random tanpa duplikat
-      const shuffled = [...emojiPool].sort(() => Math.random() - 0.5);
-      const picks = shuffled.slice(0, howMany);
+      const howMany = Math.max(1, Math.floor(Math.random() * maxReact) + 1);
+      const picks = sampleEmojis(emojiPool, howMany);
 
       for (const e of picks) {
         try {

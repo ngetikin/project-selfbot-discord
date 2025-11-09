@@ -17,7 +17,8 @@ const clearCommand: CommandModule = {
   name: 'clear',
   description: 'Hapus pesan milik akun selfbot di channel sekarang (1–100).',
   run: async (client, message, args) => {
-    if (!client.user) {
+    const selfUser = client.user;
+    if (!selfUser) {
       log.warn('Client user not ready for clear command.');
       return;
     }
@@ -33,7 +34,7 @@ const clearCommand: CommandModule = {
     // fetch messages and bulk delete (note: Discord API may not allow bulk delete depending on message age)
     const fetched = await message.channel.messages.fetch({ limit: Math.min(100, count + 5) });
     // filter messages by author id (bot) to avoid mass deleting others (adjust if needed)
-    const filtered = fetched.filter(m => m.author.id === client.user.id);
+    const filtered = fetched.filter(m => m.author.id === selfUser.id);
     const toDelete = filtered.first(count);
     if (!toDelete || toDelete.length === 0) {
       await message.channel.send('No messages found to remove.');

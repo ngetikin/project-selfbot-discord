@@ -86,7 +86,7 @@ const scheduleNextRun = (callback: () => Promise<void>) => {
 };
 
 const isTextChannel = (channel: AnyChannel | null): channel is TextBasedChannel =>
-  Boolean(channel) && 'send' in channel && typeof channel.send === 'function';
+  Boolean(channel && 'send' in channel && typeof (channel as TextBasedChannel).send === 'function');
 
 const dailyMemeEvent: EventModule = {
   event: 'ready',
