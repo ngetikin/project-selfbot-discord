@@ -1,5 +1,5 @@
 import https from 'https';
-import type { AnyChannel, TextBasedChannel } from 'discord.js-selfbot-v13';
+import type { AnyChannel, Client, TextBasedChannel } from 'discord.js-selfbot-v13';
 import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
@@ -88,9 +88,10 @@ const scheduleNextRun = (callback: () => Promise<void>) => {
 const isTextChannel = (channel: AnyChannel | null): channel is TextBasedChannel =>
   Boolean(channel && 'send' in channel && typeof (channel as TextBasedChannel).send === 'function');
 
-const dailyMemeEvent: EventModule = {
+const dailyMemeEvent: EventModule<'ready'> = {
   event: 'ready',
-  run: async client => {
+  run: async (client, _readyClient?: Client) => {
+    void _readyClient;
     if (jobInitialized) {
       return;
     }

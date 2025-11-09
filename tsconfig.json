@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "strict": false,
     "strictNullChecks": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "strict": true
   },
   "include": ["src", "types"],
   "exclude": ["node_modules"]

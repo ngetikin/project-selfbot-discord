@@ -15,7 +15,9 @@ export interface CommandModule {
   run: (client: SelfbotClient, message: Message, args: string[]) => Promise<void> | void;
 }
 
-export interface EventModule<K extends keyof ClientEvents = keyof ClientEvents> {
+type SupportedEvents = 'messageCreate' | 'ready' | 'raw';
+
+export interface EventModule<K extends SupportedEvents = SupportedEvents> {
   event: K;
   run: (client: SelfbotClient, ...args: ClientEvents[K]) => Promise<void> | void;
 }

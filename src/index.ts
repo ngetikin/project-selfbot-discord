@@ -36,7 +36,7 @@ const loadModule = <T>(modulePath: string): T | null => {
 const filterModuleFiles = (files: string[]) =>
   files.filter(file => file.endsWith('.js') || file.endsWith('.ts'));
 
-const registerEvent = <K extends keyof ClientEvents>(eventModule: EventModule<K>) => {
+const registerEvent = <K extends EventModule['event']>(eventModule: EventModule<K>) => {
   client.on(eventModule.event, async (...args: ClientEvents[K]) => {
     await eventModule.run(client, ...args);
   });

@@ -1,11 +1,12 @@
+import type { Message } from 'discord.js-selfbot-v13';
 import { getLogger } from '../utils/logger';
 import { EventModule } from '../types/modules';
 
 const log = getLogger('events:messageCreate');
 
-const messageCreateEvent: EventModule = {
+const messageCreateEvent: EventModule<'messageCreate'> = {
   event: 'messageCreate',
-  run: async (client, message) => {
+  run: async (client, message: Message) => {
     try {
       // Log event
       const authorTag = message?.author?.tag ?? 'unknown';
