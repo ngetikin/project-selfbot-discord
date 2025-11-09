@@ -69,6 +69,22 @@ pnpm build
 pm2 restart selfbot
 ```
 
+## Auto-pull di Termux
+
+Skrip `auto_pull.sh` melakukan pengecekan berkala dan restart PM2 setelah update. Fitur:
+
+- Fast-forward merge (`git merge --ff-only`) sehingga perubahan lokal tidak tertimpa.
+- Otomatis menjalankan `pnpm install --frozen-lockfile` bila `package.json/pnpm-lock.yaml` berubah dan membangun ulang proyek.
+- Variabel lingkungan untuk konfigurasi:
+  - `PROJECT_DIR` – lokasi proyek (default `/data/data/com.termux/files/home/selfbot-discord`).
+  - `AUTO_PULL_BRANCH` – branch yang dipantau (default `stable`).
+  - `AUTO_PULL_APP_NAME` – nama proses PM2 (default `selfbot-discord`).
+  - `AUTO_PULL_PM2_ENTRY` – file yang dijalankan PM2 (default `dist/index.js`).
+  - `AUTO_PULL_INTERVAL_HOURS` – jeda antar pengecekan (default 24 jam).
+  - `AUTO_PULL_PNPM_ARGS` – argumen tambahan untuk `pnpm install` (default `--frozen-lockfile`).
+
+> ⚠️ Skrip akan berhenti jika working tree kotor agar token atau perubahan lokal tidak hilang. Pastikan branch `stable` tersedia dan sudah berisi `dist/` hasil build sebelum menjalankan PM2.
+
 ## Modifikasi Cepat
 
 - Command baru: buat file di `src/commands/` export `{ name, run }`.

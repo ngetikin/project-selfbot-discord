@@ -1,58 +1,71 @@
 #!/bin/bash
 # auto_pull.sh
-# Script otomatis untuk sync project dan restart bot di Termux
-# Branch: stable
+# Skrip update otomatis untuk lingkungan Termux/PM2 dengan sinkronisasi aman.
 
-set -e  # stop jika ada error
+set -euo pipefail
 
-# Warna terminal
+PROJECT_DIR=${PROJECT_DIR:-/data/data/com.termux/files/home/selfbot-discord}
+BRANCH=${AUTO_PULL_BRANCH:-stable}
+APP_NAME=${AUTO_PULL_APP_NAME:-selfbot-discord}
+PM2_ENTRY=${AUTO_PULL_PM2_ENTRY:-dist/index.js}
+SLEEP_HOURS=${AUTO_PULL_INTERVAL_HOURS:-24}
+PNPM_INSTALL_ARGS=${AUTO_PULL_PNPM_ARGS:---frozen-lockfile}
+
 GREEN="\033[1;32m"
 YELLOW="\033[1;33m"
 RED="\033[1;31m"
 RESET="\033[0m"
 
-PROJECT_DIR="/data/data/com.termux/files/home/selfbot-discord"
-BRANCH="stable"
-APP_NAME="selfbot-discord"
+log_info() {
+  printf "%b[AUTO_PULL]%b %s\n" "$YELLOW" "$RESET" "$1"
+}
 
-echo -e "${YELLOW}[AUTO_PULL] Memulai auto-pull untuk branch '$BRANCH'...${RESET}"
+log_error() {
+  printf "%b[AUTO_PULL]%b %s\n" "$RED" "$RESET" "$1"
+}
 
-# Masuk ke folder project
-cd "$PROJECT_DIR" || { echo -e "${RED}Gagal masuk ke direktori project.${RESET}"; exit 1; }
+log_info "Project: $PROJECT_DIR | Branch: $BRANCH | PM2 entry: $PM2_ENTRY"
 
-# Ambil update terbaru
+cd "$PROJECT_DIR" || {
+  log_error "Gagal masuk ke direktori project."
+  exit 1
+}
+
+if [ -n "$(git status --porcelain)" ]; then
+  log_error "Working tree kotor. Commit atau stash perubahan sebelum menjalankan skrip ini."
+  exit 1
+}
+
 git fetch origin "$BRANCH"
 
 LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse origin/"$BRANCH")
+REMOTE=$(git rev-parse "origin/$BRANCH")
+
+NEED_RESTART=true
 
 if [ "$LOCAL" != "$REMOTE" ]; then
-  echo -e "${YELLOW}[AUTO_PULL] Ada update di branch '$BRANCH', melakukan sinkronisasi...${RESET}"
+  log_info "Update ditemukan. Melakukan fast-forward merge..."
+  git merge --ff-only "origin/$BRANCH"
 
-  # Simpan hash package.json sebelum update
-  OLD_PKG_HASH=$(sha1sum package.json 2>/dev/null | awk '{print $1}')
-
-  # Hard reset ke remote branch
-  git reset --hard origin/"$BRANCH"
-  git pull origin "$BRANCH"
-
-  # Cek apakah package.json berubah
-  NEW_PKG_HASH=$(sha1sum package.json 2>/dev/null | awk '{print $1}')
-  if [ "$OLD_PKG_HASH" != "$NEW_PKG_HASH" ]; then
-    echo -e "${YELLOW}[AUTO_PULL] package.json berubah, menginstall dependensi...${RESET}"
-    pnpm install
+  CHANGED_FILES=$(git diff --name-only HEAD@"{1}" HEAD || true)
+  if printf "%s" "$CHANGED_FILES" | grep -Eq '(^|\n)(package\.json|pnpm-lock\.yaml)(\n|$)'; then
+    log_info "Dependensi berubah. Menjalankan pnpm install $PNPM_INSTALL_ARGS ..."
+    pnpm install $PNPM_INSTALL_ARGS
   fi
 
-  # Restart pakai PM2
-  echo -e "${YELLOW}[AUTO_PULL] Merestart bot...${RESET}"
-  pm2 restart "$APP_NAME" || pm2 start index.js --name "$APP_NAME"
-
-  echo -e "${GREEN}[AUTO_PULL] Bot berhasil di-update & restart.${RESET}"
+  log_info "Membangun ulang project..."
+  pnpm build
 else
-  echo -e "${GREEN}[AUTO_PULL] Tidak ada update di branch '$BRANCH', tetap restart untuk jaga-jaga.${RESET}"
-  pm2 restart "$APP_NAME" || pm2 start index.js --name "$APP_NAME"
+  log_info "Tidak ada perubahan pada branch $BRANCH."
 fi
 
-# Rehat 24 jam
-echo -e "${YELLOW}[AUTO_PULL] Rehat selama 24 jam...${RESET}"
-sleep 24h
+if [ "$NEED_RESTART" = true ]; then
+  log_info "Merestart proses lewat PM2..."
+  if ! pm2 restart "$APP_NAME"; then
+    log_info "Instance belum ada. Menjalankan pm2 start $PM2_ENTRY --name $APP_NAME"
+    pm2 start "$PM2_ENTRY" --name "$APP_NAME"
+  fi
+fi
+
+log_info "Tidur selama ${SLEEP_HOURS}h sebelum pengecekan berikutnya."
+sleep "${SLEEP_HOURS}h"
