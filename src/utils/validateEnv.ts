@@ -12,6 +12,12 @@ type EnvCheck = {
   };
 };
 
+interface EnvDependencies {
+  key: string;
+  dependsOn: string[];
+  message: string;
+}
+
 const isDiscordId = (value: string) => /^\d{5,}$/.test(value);
 const isUrl = (value: string) => {
   try {
@@ -87,6 +93,15 @@ const OPTIONAL_VARS: EnvCheck[] = [
   },
 ];
 
+const DEPENDENCIES: EnvDependencies[] = [
+  {
+    key: 'AUTO_STATUS_ROTATOR',
+    dependsOn: ['VOICE_CHANNEL_ID'],
+    message:
+      'AUTO_STATUS_ROTATOR aktif, tetapi VOICE_CHANNEL_ID belum diatur. Tambahkan VOICE_CHANNEL_ID atau matikan AUTO_STATUS_ROTATOR.',
+  },
+];
+
 export const validateEnv = (env: NodeJS.ProcessEnv): ValidationResult => {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -110,6 +125,23 @@ export const validateEnv = (env: NodeJS.ProcessEnv): ValidationResult => {
     }
     if (check.validator && !check.validator.fn(value.trim())) {
       warnings.push(check.validator.invalidMessage);
+    }
+  }
+
+  for (const dependency of DEPENDENCIES) {
+    const flag = env[dependency.key]?.trim().toLowerCase();
+    if (!flag) {
+      continue;
+    }
+    const isTruthy = flag === '1' || flag === 'true';
+    if (!isTruthy) {
+      continue;
+    }
+    for (const depKey of dependency.dependsOn) {
+      const depValue = env[depKey]?.trim();
+      if (!depValue) {
+        errors.push(dependency.message || `${depKey} diperlukan ketika ${dependency.key} aktif.`);
+      }
     }
   }
 
