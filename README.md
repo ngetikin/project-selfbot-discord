@@ -34,7 +34,7 @@ Repositori dari ngetikin ini adalah versi TypeScript dari selfbot yang modular. 
    - `pnpm build` – compile ke `dist/`.
    - `pnpm start` – build otomatis lalu jalanin `node dist/index.js`.
    - `pnpm test` – jalanin suite Jest untuk command & event (sequential `--runInBand` supaya stabil di device rendah).
-   - `pnpm validate:env` – validasi variabel lingkungan (`.env`) tanpa menjalankan bot.
+   - `pnpm validate:env` – validasi variabel lingkungan (`.env`) tanpa menjalankan bot. Tambahkan flag `-- --env-file .env.example --json` bila ingin mengecek file lain atau mendapatkan keluaran JSON (digunakan di CI).
 
 ## Arsitektur Modul
 

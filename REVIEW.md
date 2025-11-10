@@ -22,7 +22,8 @@ Selfbot Discord modular ini dibangun dengan TypeScript (CommonJS) dan `discord.j
 **Kekuatan**
 
 - Tooling pipeline konsisten: `pnpm build` masih tersedia, namun CI/Husky sekarang mengeksekusi format/lint/test/compile sebagai langkah terpisah sehingga kegagalan lebih mudah ditelusuri.
-- Validasi konfigurasi makin ketat: `pnpm validate:env` menolak ID Discord/URL yang tidak valid, bukan sekadar cek kosong.
+- Validasi konfigurasi makin ketat: `pnpm validate:env` menolak ID Discord/URL yang tidak valid, mendeteksi ketergantungan (`AUTO_STATUS_ROTATOR` ⇒ `VOICE_CHANNEL_ID`), dan kini bisa mengeluarkan JSON untuk dipakai di CI.
+- Workflow GitHub Actions menambahkan step `pnpm validate:env -- --env-file .env.example --json` sebelum format/lint/test, sehingga contoh konfigurasi diverifikasi otomatis.
 - TypeScript mengaktifkan `strictNullChecks` + `noImplicitAny`, dan kode sudah diperbarui untuk menangani kemungkinan `null` pada `client.user`, channel fetch, dsb.
 - `auto_pull.sh` tidak lagi melakukan `git reset --hard`; ia mendeteksi working tree kotor, melakukan FF merge, menjalankan `pnpm install`/`pnpm build`, lalu restart PM2 dengan entry configurable.
 - `autoEmojiReactor` kini memakai sampling Fisher-Yates sehingga tidak membutuhkan `Array.sort(() => Math.random() - 0.5)` yang bias.
@@ -40,7 +41,7 @@ Selfbot Discord modular ini dibangun dengan TypeScript (CommonJS) dan `discord.j
 ## 4. Rencana & Saran Pengembangan
 
 1. **Stricter typing & linting** – Aktifkan `strict: true` secara bertahap, hidupkan kembali aturan `@typescript-eslint/no-unsafe-*`, dan tambahkan generics ketat untuk loader command/event.
-2. **Env intelligence** – Perluas `validateEnv` agar memeriksa dependensi (mis. `AUTO_STATUS_ROTATOR` ⇒ `VOICE_CHANNEL_ID`) dan sediakan output JSON supaya CI bisa menampilkan temuan secara jelas.
+2. **Env intelligence** – (Sebagian selesai) Tingkatkan lagi `validateEnv` untuk memeriksa relasi tambahan (mis. `WEBHOOK_URL` bila command webhook aktif), tambahkan opsi `--fail-on-warn`, dan tampilkan recommendation detail dalam output JSON. Pertimbangkan memvalidasi `.env.example` sekaligus `.env` user.
 3. **auto_pull UX** – Tambahkan opsi `--dry-run` atau logging yang merinci commit ter-update, serta verifikasi otomatis bahwa `dist/` ada sebelum restart. Dokumentasikan cara menjaga branch `stable`.
 4. **Rate limiting & observability** – Tambahkan limiter (mis. menunggu X detik antar reaksi) dan instrumentation untuk `autoEmojiReactor` agar tidak memukul API berlebihan.
 5. **Testing depth** – Tambahkan test untuk jalur error (webhook gagal, scheduler fetch gagal setelah beberapa retry) serta test untuk validator baru (cek ID/URL salah).

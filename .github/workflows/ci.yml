@@ -46,6 +46,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # 5️⃣ Validate env example
+      - name: Validate env example
+        run: pnpm validate:env -- --env-file .env.example --json
+
       # 5️⃣ Format check
       - name: Format check
         run: pnpm format:check
