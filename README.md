@@ -75,6 +75,9 @@ Skrip `auto_pull.sh` melakukan pengecekan berkala dan restart PM2 setelah update
 
 - Fast-forward merge (`git merge --ff-only`) sehingga perubahan lokal tidak tertimpa.
 - Otomatis menjalankan `pnpm install --frozen-lockfile` bila `package.json/pnpm-lock.yaml` berubah dan membangun ulang proyek.
+- Flag CLI:
+  - `--dry-run` – hanya log langkah (git/pnpm/pm2) tanpa menjalankan perintah sesungguhnya.
+  - `--once` – jalankan satu siklus saja (tanpa tidur ulang).
 - Variabel lingkungan untuk konfigurasi:
   - `PROJECT_DIR` – lokasi proyek (default `/data/data/com.termux/files/home/selfbot-discord`).
   - `AUTO_PULL_BRANCH` – branch yang dipantau (default `stable`).
@@ -82,8 +85,9 @@ Skrip `auto_pull.sh` melakukan pengecekan berkala dan restart PM2 setelah update
   - `AUTO_PULL_PM2_ENTRY` – file yang dijalankan PM2 (default `dist/index.js`).
   - `AUTO_PULL_INTERVAL_HOURS` – jeda antar pengecekan (default 24 jam).
   - `AUTO_PULL_PNPM_ARGS` – argumen tambahan untuk `pnpm install` (default `--frozen-lockfile`).
+  - `AUTO_PULL_VERIFY_DIST` – set `1/true` untuk memastikan entry (`dist/index.js`) ada sebelum restart.
 
-> ⚠️ Skrip akan berhenti jika working tree kotor agar token atau perubahan lokal tidak hilang. Pastikan branch `stable` tersedia dan sudah berisi `dist/` hasil build sebelum menjalankan PM2.
+> ⚠️ Skrip akan berhenti jika working tree kotor agar token atau perubahan lokal tidak hilang. Pastikan branch `stable` tersedia dan sudah berisi `dist/` hasil build sebelum menjalankan PM2. Gunakan `--dry-run` terlebih dahulu untuk memverifikasi konfigurasi server sebelum mode otomatis.
 
 ## Modifikasi Cepat
 
