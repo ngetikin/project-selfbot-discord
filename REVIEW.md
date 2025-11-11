@@ -25,7 +25,7 @@ Selfbot Discord modular ini dibangun dengan TypeScript (CommonJS) dan `discord.j
 - Validasi konfigurasi makin ketat: `pnpm validate:env` menolak ID Discord/URL yang tidak valid, mendeteksi ketergantungan (`AUTO_STATUS_ROTATOR` ⇒ `VOICE_CHANNEL_ID`), dan kini bisa mengeluarkan JSON untuk dipakai di CI.
 - Workflow GitHub Actions menambahkan step `pnpm validate:env -- --env-file .env.example --json` sebelum format/lint/test, sehingga contoh konfigurasi diverifikasi otomatis.
 - TypeScript mengaktifkan `strictNullChecks` + `noImplicitAny`, dan kode sudah diperbarui untuk menangani kemungkinan `null` pada `client.user`, channel fetch, dsb.
-- `auto_pull.sh` tidak lagi melakukan `git reset --hard`; ia mendeteksi working tree kotor, melakukan FF merge, menjalankan `pnpm install`/`pnpm build`, lalu restart PM2 dengan entry configurable.
+- `auto_pull.sh` tidak lagi melakukan `git reset --hard`; ia mendeteksi working tree kotor, melakukan FF merge, menjalankan `pnpm install`/`pnpm build`, menyediakan flag `--dry-run/--once`, serta restart PM2 dengan entry configurable dan opsi untuk memverifikasi `dist/`.
 - `autoEmojiReactor` kini memakai sampling Fisher-Yates sehingga tidak membutuhkan `Array.sort(() => Math.random() - 0.5)` yang bias.
 - Dokumentasi (README + AGENTS) sudah mengikuti perubahan terbaru (sequential Jest, auto_pull aman, tahapan CI/Husky).
 
