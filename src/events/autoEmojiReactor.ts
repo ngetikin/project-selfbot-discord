@@ -53,6 +53,45 @@ const sampleEmojis = (pool: EmojiIdentifierResolvable[], take: number) => {
   return copied.slice(0, take);
 };
 
+type ThrottleState = { windowStart: number; count: number };
+const throttleMap = new Map<string, ThrottleState>();
+
+const parsePositiveNumber = (value: string | undefined, fallback: number) => {
+  if (!value) return fallback;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
+};
+
+const getThrottleWindow = () => parsePositiveNumber(process.env.EMOJI_THROTTLE_WINDOW_MS, 60_000);
+const getThrottleLimit = () => Math.max(1, parsePositiveNumber(process.env.EMOJI_THROTTLE_MAX, 5));
+
+const getThrottleState = (channelId: string): ThrottleState => {
+  const now = Date.now();
+  const current = throttleMap.get(channelId);
+  if (!current || now - current.windowStart >= getThrottleWindow()) {
+    const fresh = { windowStart: now, count: 0 };
+    throttleMap.set(channelId, fresh);
+    return fresh;
+  }
+  return current;
+};
+
+const reserveSlots = (channelId: string, requested: number) => {
+  const state = getThrottleState(channelId);
+  const limit = getThrottleLimit();
+  const remaining = Math.max(0, limit - state.count);
+  if (remaining <= 0) {
+    return 0;
+  }
+  const granted = Math.min(remaining, requested);
+  state.count += granted;
+  throttleMap.set(channelId, state);
+  return granted;
+};
+
 const autoEmojiReactor: EventModule<'messageCreate'> = {
   event: 'messageCreate',
   run: async (client, message: Message) => {
@@ -78,10 +117,23 @@ const autoEmojiReactor: EventModule<'messageCreate'> = {
         emojiPool.push(...GLOBAL_EMOJI_POOL);
       }
 
-      // tentukan berapa banyak emoji (acak antara 2–5)
-      const maxReact = Math.min(15, emojiPool.length);
-      const howMany = Math.max(1, Math.floor(Math.random() * maxReact) + 1);
-      const picks = sampleEmojis(emojiPool, howMany);
+      const maxReact = Math.min(getThrottleLimit(), emojiPool.length);
+      const requested = Math.max(1, Math.floor(Math.random() * maxReact) + 1);
+      const allowed = reserveSlots(message.channel.id, requested);
+
+      if (allowed === 0) {
+        log.debug({ channelId: message.channel.id }, 'Throttle limit reached, skipping reactions');
+        return;
+      }
+
+      if (allowed < requested) {
+        log.debug(
+          { channelId: message.channel.id, allowed, requested },
+          'Throttle limited reaction count',
+        );
+      }
+
+      const picks = sampleEmojis(emojiPool, allowed);
 
       for (const e of picks) {
         try {
@@ -102,3 +154,5 @@ const autoEmojiReactor: EventModule<'messageCreate'> = {
 };
 
 export default autoEmojiReactor;
+
+export const resetEmojiThrottle = () => throttleMap.clear();
