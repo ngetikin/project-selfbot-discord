@@ -26,7 +26,7 @@ Selfbot Discord modular ini dibangun dengan TypeScript (CommonJS) dan `discord.j
 - Workflow GitHub Actions menambahkan step `pnpm validate:env -- --env-file .env.example --json` sebelum format/lint/test, sehingga contoh konfigurasi diverifikasi otomatis.
 - TypeScript mengaktifkan `strictNullChecks` + `noImplicitAny`, dan kode sudah diperbarui untuk menangani kemungkinan `null` pada `client.user`, channel fetch, dsb.
 - `auto_pull.sh` tidak lagi melakukan `git reset --hard`; ia mendeteksi working tree kotor, melakukan FF merge, menjalankan `pnpm install`/`pnpm build`, menyediakan flag `--dry-run/--once`, serta restart PM2 dengan entry configurable dan opsi untuk memverifikasi `dist/`.
-- `autoEmojiReactor` kini memakai sampling Fisher-Yates sehingga tidak membutuhkan `Array.sort(() => Math.random() - 0.5)` yang bias.
+- `autoEmojiReactor` kini memakai sampling Fisher-Yates dan throttle per channel (dikontrol via `EMOJI_THROTTLE_MAX`/`EMOJI_THROTTLE_WINDOW_MS`) sehingga tidak membutuhkan `Array.sort(() => Math.random() - 0.5)` dan lebih aman terhadap rate limit.
 - Dokumentasi (README + AGENTS) sudah mengikuti perubahan terbaru (sequential Jest, auto_pull aman, tahapan CI/Husky).
 
 **Kelemahan / Risiko**
@@ -34,7 +34,7 @@ Selfbot Discord modular ini dibangun dengan TypeScript (CommonJS) dan `discord.j
 - `tsconfig` masih memakai `strict: false`; hanya dua opsi strict yang aktif. Masih ada ruang untuk menyalakan `strict` penuh serta aturan ESLint tipe lanjutan.
 - `auto_pull.sh` mengasumsikan branch `stable` dan artefak `dist/` tersedia; tidak ada check otomatis untuk memastikan build dist terbaru sudah di-commit sebelum server menariknya.
 - `validateEnv` belum memeriksa dependensi antar variabel (contoh: `VOICE_CHANNEL_ID` seharusnya wajib ketika rotator suara aktif), dan belum mengoutput hasil dalam format machine-readable untuk CI gating.
-- `autoEmojiReactor` masih bisa melakukan reaksi hingga 15 emoji secara berurutan tanpa limiter terhadap frekuensi pesan; potensi rate-limit belum ditangani.
+- (Di-address) `autoEmojiReactor` telah memiliki limiter; pertimbangkan menambahkan statistik/logging tambahan bila ingin monitoring lebih dalam.
 - Dokumentasi belum menyediakan panduan langkah demi langkah untuk membuat branch `stable` / workflow rilis yang dibutuhkan oleh `auto_pull.sh`.
 - Meskipun pre-push/CI menampilkan tahapan eksplisit, `pnpm build` tetap menjalankan `prebuild`. Contributors perlu disiplin agar tidak menjalankan `pnpm build` sebelum format/lint/test manual untuk menghindari duplikasi waktu.
 

@@ -89,6 +89,15 @@ Skrip `auto_pull.sh` melakukan pengecekan berkala dan restart PM2 setelah update
 
 > ⚠️ Skrip akan berhenti jika working tree kotor agar token atau perubahan lokal tidak hilang. Pastikan branch `stable` tersedia dan sudah berisi `dist/` hasil build sebelum menjalankan PM2. Gunakan `--dry-run` terlebih dahulu untuk memverifikasi konfigurasi server sebelum mode otomatis.
 
+## Throttling Auto Emoji
+
+Atur variabel berikut untuk membatasi reaksi otomatis per channel:
+
+- `EMOJI_THROTTLE_MAX` – jumlah reaksi maksimum dalam satu window (default `5`).
+- `EMOJI_THROTTLE_WINDOW_MS` – durasi window throttling dalam milidetik (default `60000`).
+
+Jika limit tercapai, bot akan men-skip reaksi baru sampai window berikutnya.
+
 ## Modifikasi Cepat
 
 - Command baru: buat file di `src/commands/` export `{ name, run }`.
