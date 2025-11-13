@@ -19,11 +19,18 @@ const webhookCommand: CommandModule = {
     }
 
     try {
-      await fetch(url, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text }),
       });
+      if (!response.ok) {
+        const statusText =
+          typeof response.statusText === 'string' && response.statusText.length > 0
+            ? response.statusText
+            : 'Unknown status';
+        throw new Error(`Webhook responded with ${response.status} (${statusText})`);
+      }
       log.info({ url }, 'Webhook dispatched');
       await message.channel.send('Webhook sent ✅');
     } catch (err) {

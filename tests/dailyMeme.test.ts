@@ -91,4 +91,36 @@ describe('dailyMeme event', () => {
 
     nowSpy.mockRestore();
   });
+
+  it('does not send when meme API fails', async () => {
+    process.env.DAILY_MEME_CHANNEL_ID = 'channel-999';
+    const send = jest.fn().mockResolvedValue(undefined);
+    const client = {
+      channels: {
+        cache: new Map([['channel-999', { send }]]),
+        fetch: jest.fn(),
+      },
+    };
+
+    getSpy.mockImplementation(() => {
+      const req: { on: jest.Mock } = { on: jest.fn() };
+      req.on.mockImplementation((event: string, handler: (err: Error) => void) => {
+        if (event === 'error') {
+          process.nextTick(() => handler(new Error('api down')));
+        }
+        return req;
+      });
+      return req as any;
+    });
+
+    const nowSpy = jest
+      .spyOn(Date, 'now')
+      .mockReturnValue(new Date('2025-01-01T00:00:00Z').getTime());
+
+    await dailyMemeEvent.run(client as any, client as any);
+    await jest.runOnlyPendingTimersAsync();
+
+    expect(send).not.toHaveBeenCalled();
+    nowSpy.mockRestore();
+  });
 });
