@@ -98,6 +98,15 @@ Atur variabel berikut untuk membatasi reaksi otomatis per channel:
 
 Jika limit tercapai, bot akan men-skip reaksi baru sampai window berikutnya.
 
+## Release Workflow (main → stable)
+
+Gunakan branch `stable` sebagai sumber untuk server produksi (mis. Termux yang menjalankan `auto_pull.sh`).
+
+1. Pastikan branch `main` bersih dan lulus `pnpm format:check`, `pnpm lint`, `pnpm test`, `pnpm compile`.
+2. Checkout `stable` dan merge: `git checkout stable && git merge --ff-only main`.
+3. Push ke remote: `git push origin stable`.
+4. Server `auto_pull.sh` harus mengatur `AUTO_PULL_BRANCH=stable`, jalankan `--dry-run` dulu untuk memverifikasi sebelum mode penuh.
+
 ## Modifikasi Cepat
 
 - Command baru: buat file di `src/commands/` export `{ name, run }`.

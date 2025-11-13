@@ -170,4 +170,28 @@ describe('webhook command', () => {
     );
     expect(send).toHaveBeenCalledWith('Webhook sent ✅');
   });
+
+  it('handles non-ok responses gracefully', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+    });
+    const send = jest.fn();
+    const message = { channel: { send } };
+
+    await webhookCommand.run({} as any, message as any, ['hello']);
+
+    expect(send).toHaveBeenCalledWith('Failed to send webhook.');
+  });
+
+  it('handles fetch rejection', async () => {
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('network failure'));
+    const send = jest.fn();
+    const message = { channel: { send } };
+
+    await webhookCommand.run({} as any, message as any, ['ping']);
+
+    expect(send).toHaveBeenCalledWith('Failed to send webhook.');
+  });
 });

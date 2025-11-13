@@ -25,3 +25,9 @@ Pre-commit hooks run `lint-staged` (ESLint --fix + Prettier on staged files) aut
 ## Security & Configuration Tips
 
 Setiap kontributor wajib mengisi `.env` lokal dengan `TOKEN=...` dan menjaga file tersebut di luar git. Gunakan `pnpm validate:env` sebelum menjalankan bot di perangkat baru (opsional `-- --env-file .env.example --json` untuk memvalidasi file lain). `auto_pull.sh` kini mendukung `--dry-run`, `--once`, fast-forward merge, penolakan working tree kotor, `pnpm install` + `pnpm build`, serta restart PM2 (`AUTO_PULL_PM2_ENTRY`, default `dist/index.js`). Aktifkan `AUTO_PULL_VERIFY_DIST=1` bila ingin memastikan `dist/` tersedia sebelum restart dan dokumentasikan cara menjaga branch `stable`. Untuk membatasi reaksi otomatis, gunakan `EMOJI_THROTTLE_MAX` (jumlah) dan `EMOJI_THROTTLE_WINDOW_MS` (durasi window). GitHub Actions workflow menjalankan tahapan Validate Env → Format → Lint → Test → Compile secara eksplisit sehingga kegagalan cepat terlihat. Hindari mengaktifkan fitur self-bot di lingkungan produksi karena tetap melanggar Ketentuan Layanan Discord.
+
+## Release Workflow
+
+- Jalankan `pnpm format:check`, `pnpm lint`, `pnpm test`, `pnpm compile`, dan `pnpm build` di branch `main`.
+- Checkout `stable`, merge `main` secara fast-forward (`git checkout stable && git merge --ff-only main`), lalu push `stable`.
+- Server produksi harus mengatur `AUTO_PULL_BRANCH=stable` dan, idealnya, menjalankan `auto_pull.sh --dry-run` sebelum mode penuh.
